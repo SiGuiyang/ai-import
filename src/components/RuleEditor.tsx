@@ -74,7 +74,7 @@ export default function RuleEditor({ initialRule, file, onSave, onCancel }: Prop
     }));
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!rule.name.trim()) {
       message.warning('请输入规则名称');
       return;
@@ -85,7 +85,7 @@ export default function RuleEditor({ initialRule, file, onSave, onCancel }: Prop
     }
     const now = new Date().toISOString();
     const updatedRule = { ...rule, updatedAt: now };
-    updateRule(rule.id, updatedRule);
+    await updateRule(rule.id, updatedRule);
     onSave(updatedRule);
   };
 

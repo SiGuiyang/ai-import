@@ -49,8 +49,8 @@ export default function ImportPage() {
   const [showRuleEditor, setShowRuleEditor] = useState(false);
   const [ruleToEdit, setRuleToEdit] = useState<any>(null);
 
-  const refreshRules = () => {
-    const allRules = getRules();
+  const refreshRules = async () => {
+    const allRules = await getRules();
     setRules(allRules);
   };
 
@@ -62,6 +62,7 @@ export default function ImportPage() {
     setSelectedRuleId('');
     setParsedData([]);
     setParseError('');
+    refreshRules();
     return false;
   };
 
@@ -93,7 +94,7 @@ export default function ImportPage() {
     }
   };
 
-  const handleSaveAiRule = () => {
+  const handleSaveAiRule = async () => {
     if (!aiGeneratedRule || !newRuleName.trim()) {
       message.warning('请输入规则名称');
       return;
@@ -120,13 +121,13 @@ export default function ImportPage() {
       updatedAt: now,
     };
 
-    createRule(rule);
+    await createRule(rule);
     message.success('规则已保存');
     setSelectedRuleId(rule.id);
     setShowNewRuleModal(false);
     setShowRuleEditor(true);
     setRuleToEdit(rule);
-    refreshRules();
+    await refreshRules();
   };
 
   const handleParse = async () => {

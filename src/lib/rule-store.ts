@@ -1,42 +1,43 @@
 import type { ParseRule } from '@/lib/types';
 
-const STORAGE_KEY = 'parse_rules';
+const BASE = '/api/rules';
 
-export function getRules(): ParseRule[] {
-  if (typeof window === 'undefined') return [];
+export async function getRules(): Promise<ParseRule[]> {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    return raw ? JSON.parse(raw) : [];
+    const res = await fetch(BASE, { cache: 'no-store' });
+    if (!res.ok) return [];
+    return res.json();
   } catch {
     return [];
   }
 }
 
-export function saveRules(rules: ParseRule[]): void {
-  if (typeof window === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(rules));
-}
-
-export function getRuleById(id: string): ParseRule | undefined {
-  return getRules().find(r => r.id === id);
-}
-
-export function createRule(rule: ParseRule): void {
-  const rules = getRules();
-  rules.push(rule);
-  saveRules(rules);
-}
-
-export function updateRule(id: string, updates: Partial<ParseRule>): void {
-  const rules = getRules();
-  const idx = rules.findIndex(r => r.id === id);
-  if (idx !== -1) {
-    rules[idx] = { ...rules[idx], ...updates, updatedAt: new Date().toISOString() };
-    saveRules(rules);
+export async function getRuleById(id: string): Promise<ParseRule | undefined> {
+  try {
+    const res = await fetch(`${BASE}/${id}`, { cache: 'no-store' });
+    if (!res.ok) return undefined;
+    return res.json();
+  } catch {
+    return undefined;
   }
 }
 
-export function deleteRule(id: string): void {
-  const rules = getRules().filter(r => r.id !== id);
-  saveRules(rules);
+export async function createRule(rule: ParseRule): Promise<void> {
+  await fetch(BASE, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(rule),
+  });
+}
+
+export async function updateRule(id: string, updates: Partial<ParseRule>): Promise<void> {
+  await fetch(`${BASE}/${id}`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(updates),
+  });
+}
+
+export async function deleteRule(id: string): Promise<void> {
+  await fetch(`${BASE}/${id}`, { method: 'DELETE' });
 }

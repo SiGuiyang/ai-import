@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Table, Button, Modal, Input, Space, Typography, Tag, message, Popconfirm } from 'antd';
+import { Card, Table, Button, Modal, Space, Typography, Tag, message, Popconfirm } from 'antd';
 import { PlusOutlined, DeleteOutlined, CopyOutlined, EyeOutlined, ArrowLeftOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
 import { v4 as uuidv4 } from 'uuid';
@@ -14,34 +14,42 @@ const { Title, Text } = Typography;
 export default function RulesPage() {
   const router = useRouter();
   const [rules, setRules] = useState<ParseRule[]>([]);
+  const [loading, setLoading] = useState(false);
   const [showEditor, setShowEditor] = useState(false);
   const [editingRule, setEditingRule] = useState<ParseRule | null>(null);
 
-  const loadRules = () => {
-    setRules(getRules());
+  const loadRules = async () => {
+    setLoading(true);
+    try {
+      const data = await getRules();
+      setRules(data);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
     loadRules();
   }, []);
 
-  const handleDelete = (id: string) => {
-    deleteRule(id);
-    loadRules();
+  const handleDelete = async (id: string) => {
+    await deleteRule(id);
     message.success('规则已删除');
+    loadRules();
   };
 
-  const handleCopy = (rule: ParseRule) => {
+  const handleCopy = async (rule: ParseRule) => {
+    const now = new Date().toISOString();
     const copy: ParseRule = {
       ...rule,
       id: uuidv4(),
       name: rule.name + ' (副本)',
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      createdAt: now,
+      updatedAt: now,
     };
-    createRule(copy);
-    loadRules();
+    await createRule(copy);
     message.success('规则已复制');
+    loadRules();
   };
 
   const handleNewRule = () => {
@@ -67,11 +75,11 @@ export default function RulesPage() {
     setShowEditor(true);
   };
 
-  const handleSave = (rule: ParseRule) => {
-    loadRules();
+  const handleSave = () => {
     setShowEditor(false);
     setEditingRule(null);
     message.success('规则已保存');
+    loadRules();
   };
 
   const columns = [
@@ -98,7 +106,7 @@ export default function RulesPage() {
     {
       title: '字段映射数',
       key: 'mappings',
-      render: (_: any, record: ParseRule) => record.columnMappings.length,
+      render: (_: any, record: ParseRule) => record.columnMappings?.length ?? 0,
     },
     {
       title: '创建时间',
@@ -136,12 +144,13 @@ export default function RulesPage() {
             dataSource={rules}
             columns={columns}
             rowKey="id"
+            loading={loading}
             pagination={false}
             locale={{ emptyText: '暂无规则，点击"新建规则"创建' }}
           />
         </Card>
 
-        {rules.length === 0 && (
+        {!loading && rules.length === 0 && (
           <div style={{ textAlign: 'center', padding: 40, color: '#86909c' }}>
             <p>还没有解析规则</p>
             <p>可以通过导入页的"AI 辅助新建规则"来自动生成</p>
