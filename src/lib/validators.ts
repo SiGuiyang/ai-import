@@ -1,5 +1,11 @@
-import { isValidPhone, isPositiveInteger } from './utils';
+import { isValidPhone, isPositiveInteger, isPositiveNumber } from './utils';
 import type { ValidationError } from './types';
+
+// 合法的温层值
+const VALID_TEMP_LAYERS = ['常温', '冷链', '冷冻', '恒温', 'normal', 'cold_chain', 'frozen', 'constant_temp', '冷藏'];
+
+// 需要校验为正数的数量/重量字段名（含模糊匹配）
+const POSITIVE_FIELDS = ['skuQuantity', 'weight', 'pieces', 'quantity', 'amount', 'count'];
 
 interface ValidateOptions {
   externalCodes?: string[];  // existing codes in DB
@@ -70,6 +76,29 @@ export function validateRecords(
       errors.push({ row, field: 'skuQuantity', message: `发货数量必须为正整数，当前值: ${qty}` });
     }
 
+    // 温层校验：若字段存在则校验合法值
+    const tempLayer = rec.temperatureLayer as string | undefined;
+    if (tempLayer !== undefined && tempLayer !== null && String(tempLayer).trim()) {
+      if (!VALID_TEMP_LAYERS.includes(String(tempLayer).trim())) {
+        errors.push({
+          row,
+          field: 'temperatureLayer',
+          message: `温层值"${tempLayer}"不在合法范围内，合法值: ${VALID_TEMP_LAYERS.join('/')}`,
+        });
+      }
+    }
+
+    // 重量/件数等非正数校验
+    for (const fld of POSITIVE_FIELDS) {
+      const val = rec[fld];
+      if (val !== undefined && val !== null && val !== '') {
+        if (!isPositiveNumber(Number(val))) {
+          errors.push({ row, field: fld, message: `${fld}必须为正数，当前值: ${val}` });
+        }
+      }
+    }
+
+    // 外部编码重复检测（同批次）
     const code = rec.externalCode as string;
     if (code?.trim()) {
       const trimmed = code.trim();

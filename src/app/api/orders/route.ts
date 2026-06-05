@@ -83,6 +83,8 @@ export async function GET(req: NextRequest) {
   const page = parseInt(url.searchParams.get('page') || '1');
   const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
   const batchId = url.searchParams.get('batchId') || '';
+  const startDate = url.searchParams.get('startDate') || '';
+  const endDate = url.searchParams.get('endDate') || '';
   const offset = (page - 1) * pageSize;
 
   try {
@@ -104,6 +106,14 @@ export async function GET(req: NextRequest) {
       if (batchId) {
         conditions.push(`batch_id = $${params.length + 1}`);
         params.push(batchId);
+      }
+      if (startDate) {
+        conditions.push(`created_at >= $${params.length + 1}`);
+        params.push(startDate);
+      }
+      if (endDate) {
+        conditions.push(`created_at <= $${params.length + 1}`);
+        params.push(endDate + ' 23:59:59');
       }
 
       if (conditions.length > 0) {
