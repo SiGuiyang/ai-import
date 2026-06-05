@@ -3,6 +3,7 @@ import { parseExcelAsArrays } from '@/lib/rule-engine/parsers/excel-parser';
 import { buildRuleGenerationPrompt } from '@/lib/ai/prompts';
 import { callQwen } from '@/lib/ai';
 import { detectFileType } from '@/lib/utils';
+import { extractPdfText } from '@/lib/pdf-parser';
 import * as mammoth from 'mammoth';
 
 export async function POST(req: NextRequest) {
@@ -41,8 +42,14 @@ export async function POST(req: NextRequest) {
         filePreview = fileContent;
       }
     } else if (fileType === 'pdf') {
-      fileContent = `[PDF binary file: ${file.name}, ${buffer.length} bytes]`;
-      filePreview = fileContent;
+      try {
+        const { text } = await extractPdfText(buffer);
+        fileContent = text.slice(0, 3000);
+        filePreview = text.slice(0, 1000);
+      } catch (e) {
+        fileContent = `[PDF binary file: ${file.name}, ${buffer.length} bytes]`;
+        filePreview = fileContent;
+      }
     }
 
     const prompt = buildRuleGenerationPrompt(fileContent, fileType);

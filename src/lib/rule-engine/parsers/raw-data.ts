@@ -14,7 +14,7 @@ export interface RawData {
   rawBytes?: ArrayBuffer;
 }
 
-export function extractExcelData(buffer: ArrayBuffer): RawData {
+export function extractExcelData(buffer: ArrayBuffer | Buffer): RawData {
   const sheets = parseAllSheets(buffer);
   const result: Record<string, RawRow[]> = {};
   for (const [name, rows] of Object.entries(sheets)) {

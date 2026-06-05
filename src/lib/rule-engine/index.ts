@@ -193,7 +193,7 @@ function detectHeaderRowFromMappings(rows: RawRow[], mappings: ColumnMapping[]):
   const headerKeys = mappings.filter(m => m.sourceKey).map(m => m.sourceKey);
   for (const row of rows) {
     const joined = row.cells.join('|');
-    const matchCount = headerKeys.filter(k => joined.includes(k)).length;
+    const matchCount = headerKeys.filter(k => k && joined.includes(k)).length;
     if (matchCount >= Math.min(2, headerKeys.length)) {
       return row.cells;
     }
@@ -270,10 +270,10 @@ export function executeRule(rule: ParseRule, raw: RawData): ParsedRecord[] {
         records = applyGroupBy(records, rule.groupBy);
       }
 
-      result.push(...records.map(r => ({
-        ...r,
-        _sheetName: sheetName,
-      })));
+      for (const r of records) {
+        r._sheetName = sheetName;
+        result.push(r as ParsedRecord);
+      }
     }
   }
 
@@ -329,60 +329,92 @@ export function executeRule(rule: ParseRule, raw: RawData): ParsedRecord[] {
 
   if (raw.type === 'pdf' && raw.text) {
     const lines = raw.text.split('\n').map(l => l.trim()).filter(l => l);
-    let records: Record<string, string>[] = [];
-    let currentRec: Record<string, string> = {};
-    let inTable = false;
-    let headerRow: string[] = [];
 
+    // ---- 第一遍：提取头部 key-value 字段（row 类型映射）----
+    const headerValues: Record<string, string> = {};
     for (const line of lines) {
-      if (rule.cardSplit && line.includes(rule.cardSplit.startMarker)) {
-        if (Object.keys(currentRec).length > 0) {
-          records.push(currentRec);
-        }
-        currentRec = {};
-        inTable = false;
-        continue;
-      }
-      if (line.match(/^[-—]{3,}$/)) {
-        if (inTable && Object.keys(currentRec).length > 0) {
-          if (currentRec.skuCode || currentRec.skuName) {
-            records.push(currentRec);
-            currentRec = { ...currentRec };
-            for (const k of ['skuCode', 'skuName', 'skuQuantity', 'skuSpec']) delete currentRec[k];
-          }
-        }
-        inTable = !inTable;
-        continue;
-      }
-      const cols = line.split(/\s{2,}/);
-      if (cols.length >= 3 && !isNaN(Number(cols[cols.length - 1]))) {
-        currentRec['skuCode'] = currentRec['skuCode'] || cols[0];
-        currentRec['skuName'] = cols[Math.min(1, cols.length - 2)];
-        currentRec['skuQuantity'] = cols[cols.length - 1];
-        if (cols.length >= 4) currentRec['skuSpec'] = cols[2];
-        const recCopy = { ...currentRec, _rowIndex: String(records.length), _source: 'pdf' };
-        records.push(recCopy);
-      }
       for (const m of rule.columnMappings) {
         if (m.sourceType === 'row' && m.sourceKey && line.includes(m.sourceKey)) {
-          if (m.sourceKey.includes('收货') || m.sourceKey.includes('门店') || m.sourceKey.includes('地址') || m.sourceKey.includes('电话')) {
-            const val = line.replace(m.sourceKey, '').replace(/^[:：\s]+/, '').trim();
-            currentRec[m.targetField] = val;
-          }
+          // 支持 "key：value" 和 "key   value" 两种格式
+          const afterKey = line.slice(line.indexOf(m.sourceKey) + m.sourceKey.length);
+          const val = afterKey.replace(/^[\s:：]+/, '').trim();
+          if (val) headerValues[m.targetField] = val;
         }
       }
     }
-    if (Object.keys(currentRec).length > 0) {
-      records.push(currentRec);
+
+    // ---- 第二遍：解析表格行 ----
+    const records: Record<string, string>[] = [];
+
+    // 判断是否是 PDF 表格数据行：行首为数字序号
+    // 格式示例: "1   饮品类   ZBWP0001   茶语柠听紫苏风味糖浆   750ml*6瓶/件   件   2"
+    const tableRowPattern = /^\s*(\d+)\s+(.+)/;
+
+    for (const line of lines) {
+      const m = tableRowPattern.exec(line);
+      if (!m) continue;
+
+      // 用 2+ 空格分隔各列
+      const cols = line.trim().split(/\s{2,}/).map(c => c.trim()).filter(c => c);
+
+      // 至少要有：序号 + 名称 + 数量（最少3列）
+      if (cols.length < 3) continue;
+
+      // 最后一列必须是数量（正整数或小数）
+      const lastCol = cols[cols.length - 1];
+      if (!/^\d+(\.\d+)?$/.test(lastCol)) continue;
+
+      // 按字段数量识别列结构
+      // 7列: 序号 分类 编码 名称 规格 单位 数量
+      // 6列: 序号 编码 名称 规格 单位 数量
+      // 5列: 序号 编码 名称 规格 数量
+      // 4列: 序号 编码 名称 数量
+      const rec: Record<string, string> = { ...headerValues };
+
+      if (cols.length >= 7) {
+        rec['skuCode'] = cols[2];
+        rec['skuName'] = cols[3];
+        rec['skuSpec'] = cols[4];
+        rec['skuQuantity'] = cols[cols.length - 1];
+      } else if (cols.length === 6) {
+        rec['skuCode'] = cols[1];
+        rec['skuName'] = cols[2];
+        rec['skuSpec'] = cols[3];
+        rec['skuQuantity'] = cols[5];
+      } else if (cols.length === 5) {
+        rec['skuCode'] = cols[1];
+        rec['skuName'] = cols[2];
+        rec['skuSpec'] = cols[3];
+        rec['skuQuantity'] = cols[4];
+      } else if (cols.length === 4) {
+        rec['skuCode'] = cols[1];
+        rec['skuName'] = cols[2];
+        rec['skuQuantity'] = cols[3];
+      } else {
+        continue;
+      }
+
+      // 用 columnMappings 中的 column 类型字段覆盖（支持自定义列映射）
+      // 此处 cols 基于真实 PDF 列序，若规则定义了 sourceIndex 则按序覆盖
+      for (const mapping of rule.columnMappings) {
+        if (mapping.sourceType === 'column' && mapping.sourceIndex !== undefined) {
+          const idx = mapping.sourceIndex;
+          if (idx >= 0 && idx < cols.length) {
+            rec[mapping.targetField] = cols[idx];
+          }
+        }
+      }
+
+      rec['_rowIndex'] = String(records.length);
+      rec['_source'] = 'pdf';
+
+      // 过滤"合计"行（序号 0 或文字含"合计"）
+      if (rec['skuName'] && /^合\s*计/.test(rec['skuName'])) continue;
+
+      records.push(rec);
     }
 
-    const deduped = records.filter((rec, i, arr) => {
-      return i === arr.findIndex(r => JSON.stringify(r) === JSON.stringify(rec));
-    });
-    result.push(...deduped.map(r => ({
-      ...r,
-      _source: 'pdf',
-    })));
+    result.push(...records as ParsedRecord[]);
   }
 
   return result;

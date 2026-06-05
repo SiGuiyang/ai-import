@@ -6,7 +6,7 @@ interface SheetData {
   maxCols: number;
 }
 
-export function parseExcel(buffer: ArrayBuffer): SheetData[] {
+export function parseExcel(buffer: ArrayBuffer | Buffer): SheetData[] {
   const workbook = XLSX.read(buffer, { type: 'array', cellDates: false });
   return workbook.SheetNames.map(name => {
     const sheet = workbook.Sheets[name];
@@ -32,13 +32,13 @@ export function parseExcel(buffer: ArrayBuffer): SheetData[] {
   });
 }
 
-export function parseExcelAsArrays(buffer: ArrayBuffer): string[][] {
+export function parseExcelAsArrays(buffer: ArrayBuffer | Buffer): string[][] {
   const sheets = parseExcel(buffer);
   if (sheets.length === 0) return [];
   return sheets[0].rows;
 }
 
-export function parseAllSheets(buffer: ArrayBuffer): Record<string, string[][]> {
+export function parseAllSheets(buffer: ArrayBuffer | Buffer): Record<string, string[][]> {
   const sheets = parseExcel(buffer);
   const result: Record<string, string[][]> = {};
   for (const sheet of sheets) {

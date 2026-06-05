@@ -3,6 +3,7 @@ import { parseExcelAsArrays } from '@/lib/rule-engine/parsers/excel-parser';
 import { extractExcelData } from '@/lib/rule-engine/parsers/raw-data';
 import { executeRule } from '@/lib/rule-engine';
 import { detectFileType } from '@/lib/utils';
+import { extractPdfText } from '@/lib/pdf-parser';
 import * as mammoth from 'mammoth';
 import type { ParseRule } from '@/lib/types';
 
@@ -41,7 +42,8 @@ export async function POST(req: NextRequest) {
       const raw = { type: 'word' as const, fileName: file.name, text: result.value };
       parsedData = executeRule(rule, raw);
     } else if (fileType === 'pdf') {
-      const raw = { type: 'pdf' as const, fileName: file.name, text: `[PDF parsed text from ${file.name}]` };
+      const { text } = await extractPdfText(buffer);
+      const raw = { type: 'pdf' as const, fileName: file.name, text };
       parsedData = executeRule(rule, raw);
     } else {
       return NextResponse.json({ error: 'Unsupported file type' }, { status: 400 });
