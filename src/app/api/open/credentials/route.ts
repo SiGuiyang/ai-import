@@ -70,7 +70,7 @@ export async function GET() {
     let list: any[] = [];
     try {
       list = await sql`
-        SELECT app_id, app_name, active, created_at, updated_at
+        SELECT app_id, app_secret, app_name, active, created_at, updated_at
         FROM app_credentials ORDER BY created_at DESC
       `;
     } catch {
@@ -82,12 +82,85 @@ export async function GET() {
       message: 'success',
       data: list.map((c) => ({
         appId: c.app_id,
+        appSecret: c.app_secret || '',
         appName: c.app_name || '',
         active: c.active,
         createdAt: c.created_at,
         updatedAt: c.updated_at,
       })),
     });
+  } catch (e) {
+    return NextResponse.json({ code: 500, message: String(e) }, { status: 500 });
+  }
+}
+
+/**
+ * PUT /api/open/credentials
+ * 更新凭证状态（启用/禁用）
+ *
+ * 请求体：
+ *   appId  - 应用ID
+ *   active - 是否启用
+ */
+export async function PUT(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { appId, active } = body;
+
+    if (!appId) {
+      return NextResponse.json({ code: 400, message: 'appId 为必填项' }, { status: 400 });
+    }
+
+    await initDB();
+    const sql = await getSql();
+
+    try {
+      await sql`
+        UPDATE app_credentials SET active = ${!!active}, updated_at = NOW()
+        WHERE app_id = ${appId}
+      `;
+    } catch (e) {
+      return NextResponse.json(
+        { code: 500, message: `更新失败: ${String(e)}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ code: 0, message: '更新成功' });
+  } catch (e) {
+    return NextResponse.json({ code: 500, message: String(e) }, { status: 500 });
+  }
+}
+
+/**
+ * DELETE /api/open/credentials
+ * 删除凭证
+ *
+ * 请求体：
+ *   appId - 应用ID
+ */
+export async function DELETE(req: NextRequest) {
+  try {
+    const body = await req.json();
+    const { appId } = body;
+
+    if (!appId) {
+      return NextResponse.json({ code: 400, message: 'appId 为必填项' }, { status: 400 });
+    }
+
+    await initDB();
+    const sql = await getSql();
+
+    try {
+      await sql`DELETE FROM app_credentials WHERE app_id = ${appId}`;
+    } catch (e) {
+      return NextResponse.json(
+        { code: 500, message: `删除失败: ${String(e)}` },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ code: 0, message: '删除成功' });
   } catch (e) {
     return NextResponse.json({ code: 500, message: String(e) }, { status: 500 });
   }

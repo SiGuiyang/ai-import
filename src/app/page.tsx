@@ -440,6 +440,9 @@ export default function ImportPage() {
           <Button type="link" onClick={() => router.push('/rules')}>
             规则管理
           </Button>
+          <Button type="link" onClick={() => router.push('/credentials')}>
+            凭证管理
+          </Button>
         </div>
 
         <Card style={{ marginBottom: 24 }}>
