@@ -56,6 +56,18 @@ export async function initDB() {
     await sql`
       CREATE INDEX IF NOT EXISTS idx_orders_batch_id ON orders(batch_id)
     `;
+
+    // 开放接口鉴权凭据表
+    await sql`
+      CREATE TABLE IF NOT EXISTS app_credentials (
+        app_id TEXT PRIMARY KEY,
+        app_secret TEXT NOT NULL,
+        app_name TEXT,
+        active BOOLEAN DEFAULT true,
+        created_at TIMESTAMP DEFAULT NOW(),
+        updated_at TIMESTAMP DEFAULT NOW()
+      )
+    `;
   } catch (e) {
     console.warn('DB init failed, using in-memory fallback:', e);
   }
