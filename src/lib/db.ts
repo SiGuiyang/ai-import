@@ -68,6 +68,12 @@ export async function initDB() {
         updated_at TIMESTAMP DEFAULT NOW()
       )
     `;
+
+    // 运单异常状态字段（增量迁移，忽略已存在的列）
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS exception_status TEXT`; } catch {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS exception_reason TEXT`; } catch {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS exception_time TIMESTAMP`; } catch {}
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_orders_exception_status ON orders(exception_status)`; } catch {}
   } catch (e) {
     console.warn('DB init failed, using in-memory fallback:', e);
   }
