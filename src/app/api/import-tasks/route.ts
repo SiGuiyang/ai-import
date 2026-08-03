@@ -18,7 +18,7 @@ import { initDB, getSql } from '@/lib/db';
 import { generateTraceId, generateTaskId, generateUnitId, logTraceEvent } from '@/lib/trace';
 import * as XLSX from 'xlsx';
 import mammoth from 'mammoth';
-import type { ImportTaskStatus, BatchStatus } from '@/lib/types';
+import type { ImportTaskStatus } from '@/lib/types';
 
 // 处理单元大小（每批行数）
 const BATCH_SIZE = 1000;
@@ -127,7 +127,7 @@ export async function POST(req: NextRequest) {
     const fileName = file.name;
 
     // 2. 快速解析文件
-    const { rows: parsedRows, headers } = await parseFile(file);
+    const { rows: parsedRows } = await parseFile(file);
     const totalRows = parsedRows.length;
 
     if (totalRows === 0) {
@@ -258,9 +258,15 @@ export async function POST(req: NextRequest) {
       message: `文件: ${fileName}, 总行数: ${totalRows}, 批次: ${totalBatches}`,
     });
 
-    // 7. 立即返回（P95 ≤ 1秒）
+    // 7. 立即返回（P95 ≤ 1秒），然后异步触发 dispatch
     const cost = Date.now() - startedAt;
     console.log(`[ImportTask] taskId=${taskId} traceId=${traceId} totalRows=${totalRows} batches=${totalBatches} cost=${cost}ms`);
+
+    // 异步触发分发（fire-and-forget，不阻塞响应）
+    const dispatchUrl = new URL('/api/import-tasks/dispatch', req.url).toString();
+    fetch(dispatchUrl, { method: 'POST' }).catch((err) =>
+      console.warn(`[ImportTask] dispatch trigger failed for ${taskId}:`, err)
+    );
 
     return NextResponse.json({
       taskId,

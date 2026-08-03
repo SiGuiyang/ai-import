@@ -3,16 +3,7 @@
   "buildCommand": "next build",
   "outputDirectory": ".next",
   "installCommand": "npm install",
-  "crons": [
-    {
-      "path": "/api/import-tasks/dispatch",
-      "schedule": "*/15 * * * *"
-    }
-  ],
   "functions": {
-    "src/app/api/import-tasks/dispatch/route.ts": {
-      "maxDuration": 60
-    },
     "src/app/api/import-tasks/route.ts": {
       "maxDuration": 10
     }

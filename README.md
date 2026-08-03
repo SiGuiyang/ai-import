@@ -89,7 +89,7 @@ src/
 | `GET` | `/api/import-tasks/:taskId` | 任务进度（总行数/已处理/成功/失败/吞吐量） |
 | `GET` | `/api/import-tasks/:taskId/errors` | 错误明细（按批次/错误码筛选+分页） |
 | `GET` | `/api/import-tasks/:taskId/batches` | 批次状态+性能日志 |
-| `POST` | `/api/import-tasks/dispatch` | Outbox Dispatcher（Cron 定时触发） |
+| `POST` | `/api/import-tasks/dispatch` | Outbox Dispatcher（上传时 fire-and-forget 触发 + 手动重试） |
 
 ### 监控与 Trace
 
@@ -108,9 +108,9 @@ src/
   ├→ 写入 import_task_raw_data（原始行数据）
   ├→ 创建 N 个 import_task_batches（处理单元）
   └→ 写入 event_outbox（ImportBatchCreated 事件）
-  ↓ 返回 { taskId, traceId }
+  ↓ 返回 { taskId, traceId } → fire-and-forget 触发 Dispatcher
 
-Vercel Cron (每 15s) → POST /api/import-tasks/dispatch
+POST /api/import-tasks/dispatch（上传触发 / 手动调用）
   ├→ 轮询 event_outbox (PENDING → SENT)
   ├→ 标记 batch → QUEUED
   └→ 调用 processBatchJob():
@@ -160,7 +160,7 @@ curl -X POST http://localhost:3000/api/import-tasks/dispatch
 # 部署到 Vercel
 vercel deploy
 
-# Vercel Cron 自动触发 Dispatcher (每 15 秒)
+# 分发由上传 API 自动触发，如需兜底可升级 Pro 添加每日 Cron
 ```
 
 ## 故障模拟

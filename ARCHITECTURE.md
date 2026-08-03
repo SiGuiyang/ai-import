@@ -25,12 +25,14 @@ V2 原有同步阻塞链路在每次上传时，于单次 HTTP 请求中完成�
 
 ## 3. Worker 容量规划
 
-- **Worker 模式**：Serverless Consumer（Vercel Cron 每 15 秒触发 Dispatcher）
+- **Worker 模式**：上传完成后 fire-and-forget 触发 Dispatcher（不依赖 Cron）
 - **并发控制**：每次 Dispatcher 调用最多处理 5 个批次（MAX_EVENTS_PER_RUN = 5）
 - **10,000 行推导**：
   - 10 个批次 × 平均 5s/批次 = 50s 总处理时间
-  - 2 轮 Dispatcher 调用（15s 间隔）即可完成全部批次
+  - 单次 Dispatcher 处理 5 个，分 2 轮触发即可完成
   - 满足 10,000 单/分钟的目标
+- **Vercel Hobby 兼容**：不依赖 sub-daily cron，Dispatcher 由上传 API 的 fire-and-forget fetch 触发
+- **Pro 计划升级路径**：可添加 `0 0 * * *` 兜底 cron，每日清理超时任务和积压事件
 
 ## 4. 10,000 单/分钟性能推导
 
@@ -39,7 +41,7 @@ V2 原有同步阻塞链路在每次上传时，于单次 HTTP 请求中完成�
 | 文件行数 | 10,000 行 | 压测文件 |
 | 批次大小 | 1,000 行 | 10 个批次 |
 | 批次处理耗时 | 3-8 秒 | 包含解析+规则+校验+写入 |
-| Dispatcher 间隔 | 15 秒 | Vercel Cron |
+| 分发触发 | 上传时即时 | 上传 API fire-and-forget 触发 Dispatch |
 | 总耗时预估 | 20-40 秒 | ≤ 60s 目标 |
 | 上传响应 P95 | ≤ 1 秒 | 仅创建任务+存储原始数据 |
 
@@ -53,9 +55,10 @@ V2 原有同步阻塞链路在每次上传时，于单次 HTTP 请求中完成�
 ## 6. Outbox 可靠性保证
 
 - 任务创建（`import_tasks`）与 Outbox 事件（`event_outbox`）在同一请求中顺序写入
-- Dispatcher 轮询 `event_outbox` 的 PENDING 事件并投递
+- 上传完成后 fire-and-forget 调用 Dispatcher，Dispatcher 消费 Outbox PENDING 事件
 - 投递失败重试：`retry_count` 递增，`next_retry_at` 延后 30 秒
 - 处理单元状态表（`import_task_batches`）记录每个批次状态，防止丢失
+- 如 Dispatcher 未被触发（fetch 失败），可手动调用 `POST /api/import-tasks/dispatch` 重试
 
 ## 7. 幂等设计
 
@@ -103,4 +106,4 @@ V2 原有同步阻塞链路在每次上传时，于单次 HTTP 请求中完成�
 3. 降级任务中未校验的行，是否需要自动补校验？如果需要，触发时机是什么？
 4. 错误日志和性能日志的保留周期？（目前无自动清理机制）
 5. 是否需要支持 WebSocket/SSE 实时推送进度？当前使用轮询
-6. Worker 是否需要部署在独立常驻进程环境中？当前使用 Serverless Cron
+6. 是否考虑升级到 Vercel Pro 以获得 sub-daily cron？当前使用上传触发分发（Hobby 兼容）
