@@ -443,6 +443,12 @@ export default function ImportPage() {
           <Button type="link" onClick={() => router.push('/credentials')}>
             凭证管理
           </Button>
+          <Button type="link" onClick={() => router.push('/import-tasks')}>
+            导入任务
+          </Button>
+          <Button type="link" onClick={() => router.push('/monitor')}>
+            监控看板
+          </Button>
         </div>
 
         <Card style={{ marginBottom: 24 }}>

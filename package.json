@@ -6,7 +6,12 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "seed": "npx tsx scripts/seed-data.ts",
+    "seed:clean": "npx tsx scripts/seed-data.ts --clean-only",
+    "seed:sku": "npx tsx scripts/seed-data.ts --seed-only",
+    "seed:file": "npx tsx scripts/seed-data.ts --file-only",
+    "gen:test-file": "npx tsx scripts/generate-test-file.ts"
   },
   "dependencies": {
     "@ant-design/icons": "^6.2.5",
@@ -30,6 +35,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.23.5",
     "typescript": "^5"
   }
 }
