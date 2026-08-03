@@ -88,7 +88,7 @@ export async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_sku_master_code ON sku_master(sku_code)`; } catch (e) { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_sku_master_code ON sku_master(sku_code)`; } catch {}
 
     // 导入任务主表
     await sql`
@@ -111,8 +111,8 @@ export async function initDB() {
         completed_at TIMESTAMP
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_import_tasks_status ON import_tasks(status, created_at)`; } catch { /* ignore */ }
-    await sql`CREATE INDEX IF NOT EXISTS idx_import_tasks_trace ON import_tasks(trace_id)`; } catch { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_import_tasks_status ON import_tasks(status, created_at)`; } catch {}
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_import_tasks_trace ON import_tasks(trace_id)`; } catch {}
 
     // 处理单元状态表
     await sql`
@@ -131,7 +131,7 @@ export async function initDB() {
         UNIQUE(task_id, unit_id)
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_batches_task_id ON import_task_batches(task_id)`; } catch { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_batches_task_id ON import_task_batches(task_id)`; } catch {}
 
     // 行级错误明细表
     await sql`
@@ -149,8 +149,8 @@ export async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_errors_task_unit ON import_task_errors(task_id, unit_id)`; } catch { /* ignore */ }
-    await sql`CREATE INDEX IF NOT EXISTS idx_errors_code ON import_task_errors(error_code)`; } catch { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_errors_task_unit ON import_task_errors(task_id, unit_id)`; } catch {}
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_errors_code ON import_task_errors(error_code)`; } catch {}
 
     // 事件 Outbox 表
     await sql`
@@ -166,7 +166,7 @@ export async function initDB() {
         sent_at TIMESTAMP
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_outbox_status ON event_outbox(status, next_retry_at)`; } catch { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_outbox_status ON event_outbox(status, next_retry_at)`; } catch {}
 
     // 处理单元性能日志表
     await sql`
@@ -185,7 +185,7 @@ export async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_perf_task_unit ON batch_performance_log(task_id, unit_id)`; } catch { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_perf_task_unit ON batch_performance_log(task_id, unit_id)`; } catch {}
 
     // 链路时间线事件表
     await sql`
@@ -200,8 +200,8 @@ export async function initDB() {
         occurred_at TIMESTAMP DEFAULT NOW()
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_trace_trace_id ON trace_events(trace_id, occurred_at)`; } catch { /* ignore */ }
-    await sql`CREATE INDEX IF NOT EXISTS idx_trace_task_id ON trace_events(task_id)`; } catch { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_trace_trace_id ON trace_events(trace_id, occurred_at)`; } catch {}
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_trace_task_id ON trace_events(task_id)`; } catch {}
 
     // 导入原始数据表
     await sql`
@@ -213,7 +213,7 @@ export async function initDB() {
         created_at TIMESTAMP DEFAULT NOW()
       )
     `;
-    await sql`CREATE INDEX IF NOT EXISTS idx_raw_data_task_row ON import_task_raw_data(task_id, row_index)`; } catch { /* ignore */ }
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_raw_data_task_row ON import_task_raw_data(task_id, row_index)`; } catch {}
 
   } catch (e) {
     console.warn('DB init failed, using in-memory fallback:', e);
