@@ -4,7 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="删除" />
+    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="docs(spefication): 添加 AI 智能文件解析导入系统设计文档&#10;&#10;- 创建 .env.example 配置文件模板&#10;- 添加 .eslintrc.json 代码规范配置&#10;- 创建 .gitignore 忽略文件配置&#10;- 添加 900 行详细的 AI 智能文件解析导入系统设计文档&#10;- 包含 9 种文件格式兼容方案和系统架构设计&#10;- 定义解析规则引擎 DSL 和 6 种提取器详设&#10;- 规划页面设计和 API Routes 详设&#10;- 提供完整的实施计划和技术选型说明">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/db/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/db/schema.ts" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -267,7 +271,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785825852909</updated>
     </task>
-    <option name="localTasksCounter" value="27" />
+    <task id="LOCAL-00027" summary="docs(spefication): 添加 AI 智能文件解析导入系统设计文档&#10;&#10;- 创建 .env.example 配置文件模板&#10;- 添加 .eslintrc.json 代码规范配置&#10;- 创建 .gitignore 忽略文件配置&#10;- 添加 900 行详细的 AI 智能文件解析导入系统设计文档&#10;- 包含 9 种文件格式兼容方案和系统架构设计&#10;- 定义解析规则引擎 DSL 和 6 种提取器详设&#10;- 规划页面设计和 API Routes 详设&#10;- 提供完整的实施计划和技术选型说明">
+      <option name="closed" value="true" />
+      <created>1785827978156</created>
+      <option name="number" value="00027" />
+      <option name="presentableId" value="LOCAL-00027" />
+      <option name="project" value="LOCAL" />
+      <updated>1785827978156</updated>
+    </task>
+    <option name="localTasksCounter" value="28" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -335,6 +347,7 @@
     <MESSAGE value="docs: 删除项目架构文档、包配置和部署配置&#10;&#10;- 移除 ARCHITECTURE.md 重构假设说明文档&#10;- 删除 package.json 项目依赖配置文件&#10;- 移除 README.md 项目说明和快速开始文档&#10;- 清理 vercel.json Vercel 部署配置文件" />
     <MESSAGE value="feat(core): 添加开放接口鉴权和数据表格组件&#10;&#10;- 实现了基于 HMAC-SHA256 的开放接口鉴权功能&#10;- 创建了可编辑的数据表格组件支持 Excel 导入导出&#10;- 集成 Neon 数据库并创建了订单和解析规则表结构&#10;- 添加了 Excel 解析器和规则引擎核心功能&#10;- 配置了 Eslint 和全局样式主题&#10;- 实现了 AI 接口调用功能用于智能解析" />
     <MESSAGE value="删除" />
-    <option name="LAST_COMMIT_MESSAGE" value="删除" />
+    <MESSAGE value="docs(spefication): 添加 AI 智能文件解析导入系统设计文档&#10;&#10;- 创建 .env.example 配置文件模板&#10;- 添加 .eslintrc.json 代码规范配置&#10;- 创建 .gitignore 忽略文件配置&#10;- 添加 900 行详细的 AI 智能文件解析导入系统设计文档&#10;- 包含 9 种文件格式兼容方案和系统架构设计&#10;- 定义解析规则引擎 DSL 和 6 种提取器详设&#10;- 规划页面设计和 API Routes 详设&#10;- 提供完整的实施计划和技术选型说明" />
+    <option name="LAST_COMMIT_MESSAGE" value="docs(spefication): 添加 AI 智能文件解析导入系统设计文档&#10;&#10;- 创建 .env.example 配置文件模板&#10;- 添加 .eslintrc.json 代码规范配置&#10;- 创建 .gitignore 忽略文件配置&#10;- 添加 900 行详细的 AI 智能文件解析导入系统设计文档&#10;- 包含 9 种文件格式兼容方案和系统架构设计&#10;- 定义解析规则引擎 DSL 和 6 种提取器详设&#10;- 规划页面设计和 API Routes 详设&#10;- 提供完整的实施计划和技术选型说明" />
   </component>
 </project>

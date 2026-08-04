@@ -7,6 +7,7 @@ import {
   UploadOutlined,
   SettingOutlined,
   OrderedListOutlined,
+  ApiOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -33,6 +34,11 @@ const menuItems = [
     key: "/orders",
     icon: <OrderedListOutlined />,
     label: "运单列表",
+  },
+  {
+    key: "/apps",
+    icon: <ApiOutlined />,
+    label: "开放应用",
   },
 ];
 

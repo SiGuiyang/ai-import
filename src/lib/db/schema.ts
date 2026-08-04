@@ -7,6 +7,7 @@ import {
   timestamp,
   jsonb,
   boolean,
+  pgEnum,
 } from "drizzle-orm/pg-core";
 
 // ============ 解析规则表 ============
@@ -64,4 +65,19 @@ export const orderItems = pgTable("order_items", {
   quantity: integer("quantity").notNull(),
   specification: varchar("specification", { length: 500 }),
   sortOrder: integer("sort_order").default(0),
+});
+
+// ============ 开放应用状态枚举 ============
+export const appStatusEnum = pgEnum("app_status", ["active", "disabled"]);
+
+// ============ 开放应用表 ============
+export const openApps = pgTable("open_apps", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: varchar("name", { length: 255 }).notNull(),
+  appId: varchar("app_id", { length: 100 }).notNull().unique(),
+  appSecret: varchar("app_secret", { length: 255 }).notNull(),
+  description: text("description"),
+  status: appStatusEnum("status").notNull().default("active"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
