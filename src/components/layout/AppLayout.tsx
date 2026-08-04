@@ -8,6 +8,8 @@ import {
   SettingOutlined,
   OrderedListOutlined,
   ApiOutlined,
+  FundViewOutlined,
+  NodeIndexOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -39,6 +41,16 @@ const menuItems = [
     key: "/apps",
     icon: <ApiOutlined />,
     label: "开放应用",
+  },
+  {
+    key: "/monitor",
+    icon: <FundViewOutlined />,
+    label: "监控看板",
+  },
+  {
+    key: "/traces",
+    icon: <NodeIndexOutlined />,
+    label: "Trace 检索",
   },
 ];
 

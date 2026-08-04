@@ -4,10 +4,14 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="feat(api): 添加开放应用管理和API鉴权功能&#10;&#10;- 在AppLayout中添加开放应用导航菜单项&#10;- 创建openApps数据库表和appStatus枚举类型&#10;- 实现HTTP签名验证工具和中间件&#10;- 添加应用管理页面支持创建、查询、更新、删除操作&#10;- 实现应用密钥重置和状态切换功能&#10;- 创建">
+    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="chore(config): 配置 Next.js 应用监控钩子和数据库初始化&#10;&#10;- 在 next.config.mjs 中启用 instrumentationHook 实验性功能&#10;- 添加 db:push 脚本到 package.json 用于数据库推送&#10;- 创建 src/instrumentation.ts 文件实现应用启动时数据库检查&#10;- 实现 src/lib/db/migrate.ts 数据库初始化功能&#10;- 配置数据库表自动创建和错误处理机制&#10;- 更新 IDE 工作区配置以反映最新的提交信息">
+      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/next.config.mjs" beforeDir="false" afterPath="$PROJECT_DIR$/next.config.mjs" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/db/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/db/schema.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -287,7 +291,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785829841658</updated>
     </task>
-    <option name="localTasksCounter" value="29" />
+    <task id="LOCAL-00029" summary="chore(config): 配置 Next.js 应用监控钩子和数据库初始化&#10;&#10;- 在 next.config.mjs 中启用 instrumentationHook 实验性功能&#10;- 添加 db:push 脚本到 package.json 用于数据库推送&#10;- 创建 src/instrumentation.ts 文件实现应用启动时数据库检查&#10;- 实现 src/lib/db/migrate.ts 数据库初始化功能&#10;- 配置数据库表自动创建和错误处理机制&#10;- 更新 IDE 工作区配置以反映最新的提交信息">
+      <option name="closed" value="true" />
+      <created>1785830694161</created>
+      <option name="number" value="00029" />
+      <option name="presentableId" value="LOCAL-00029" />
+      <option name="project" value="LOCAL" />
+      <updated>1785830694161</updated>
+    </task>
+    <option name="localTasksCounter" value="30" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -332,7 +344,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(data): 添加数据表格组件和数据库集成功能&#10;&#10;- 实现了可编辑的数据表格组件，支持行内编辑和验证&#10;- 集成 Neon 数据库连接，创建订单和规则表结构&#10;- 添加 Excel 解析器支持多工作表数据提取&#10;- 实现数据验证逻辑，包括必填字段和重复检查&#10;- 添加全局样式配置和 Ant Design 主题定制&#10;- 实现 AI 接口调用模块用于规则生成&#10;- 添加订单列表页面展示导入的运单数据&#10;- 实现文件解析引擎支持多种格式处理&#10;- 配置项目依赖" />
     <MESSAGE value="refactor(rules): 将规则存储从本地存储迁移到API接口&#10;&#10;- 移除Ant Design Input组件依赖并更新导入&#10;- 为规则页面添加加载状态指示器&#10;- 将所有规则操作方法改为异步函数并适配API调用&#10;- 更新时间戳生成逻辑避免重复计算&#10;- 在表格中显示加载状态提升用户体验&#10;- 修复字段映射数渲染中的潜在空值错误&#10;- 迁移规则管理功能到后端API接口&#10;- 更新规则编辑器组件以支持异步保存操作" />
     <MESSAGE value="feat(data-table): 增强数据表格组件功能&#10;&#10;- 添加温层、重量、件数等新字段支持&#10;- 实现单元格编辑功能，支持回车、Tab、方向键导航&#10;- 添加数据导出Excel功能&#10;- 集成数据库重复检测，实时显示重复状态&#10;- 优化错误提示和视觉反馈&#10;- 重构验证逻辑，提高性能和准确性&#10;- 添加批量删除和新增行功能&#10;- 改进样式和用户体验设计" />
     <MESSAGE value="feat(api): 添加开放接口鉴权和运单查询功能&#10;&#10;- 在数据库初始化时创建 app_credentials 表用于存储应用凭证&#10;- 实现 HMAC-SHA256 签名验证机制，防止重放攻击&#10;- 添加 /api/open/credentials 接口用于管理应用凭证&#10;- 实现 /api/open/waybills/[waybillNo] 接口按运单号查询详情&#10;- 实现 /api/open/waybills 接口支持分页查询所有运单&#10;- 添加时间戳验证和应用状态检查机制&#10;- 支持模糊搜索和日期范围筛选功能" />
@@ -357,6 +368,7 @@
     <MESSAGE value="删除" />
     <MESSAGE value="docs(spefication): 添加 AI 智能文件解析导入系统设计文档&#10;&#10;- 创建 .env.example 配置文件模板&#10;- 添加 .eslintrc.json 代码规范配置&#10;- 创建 .gitignore 忽略文件配置&#10;- 添加 900 行详细的 AI 智能文件解析导入系统设计文档&#10;- 包含 9 种文件格式兼容方案和系统架构设计&#10;- 定义解析规则引擎 DSL 和 6 种提取器详设&#10;- 规划页面设计和 API Routes 详设&#10;- 提供完整的实施计划和技术选型说明" />
     <MESSAGE value="feat(api): 添加开放应用管理和API鉴权功能&#10;&#10;- 在AppLayout中添加开放应用导航菜单项&#10;- 创建openApps数据库表和appStatus枚举类型&#10;- 实现HTTP签名验证工具和中间件&#10;- 添加应用管理页面支持创建、查询、更新、删除操作&#10;- 实现应用密钥重置和状态切换功能&#10;- 创建" />
-    <option name="LAST_COMMIT_MESSAGE" value="feat(api): 添加开放应用管理和API鉴权功能&#10;&#10;- 在AppLayout中添加开放应用导航菜单项&#10;- 创建openApps数据库表和appStatus枚举类型&#10;- 实现HTTP签名验证工具和中间件&#10;- 添加应用管理页面支持创建、查询、更新、删除操作&#10;- 实现应用密钥重置和状态切换功能&#10;- 创建" />
+    <MESSAGE value="chore(config): 配置 Next.js 应用监控钩子和数据库初始化&#10;&#10;- 在 next.config.mjs 中启用 instrumentationHook 实验性功能&#10;- 添加 db:push 脚本到 package.json 用于数据库推送&#10;- 创建 src/instrumentation.ts 文件实现应用启动时数据库检查&#10;- 实现 src/lib/db/migrate.ts 数据库初始化功能&#10;- 配置数据库表自动创建和错误处理机制&#10;- 更新 IDE 工作区配置以反映最新的提交信息" />
+    <option name="LAST_COMMIT_MESSAGE" value="chore(config): 配置 Next.js 应用监控钩子和数据库初始化&#10;&#10;- 在 next.config.mjs 中启用 instrumentationHook 实验性功能&#10;- 添加 db:push 脚本到 package.json 用于数据库推送&#10;- 创建 src/instrumentation.ts 文件实现应用启动时数据库检查&#10;- 实现 src/lib/db/migrate.ts 数据库初始化功能&#10;- 配置数据库表自动创建和错误处理机制&#10;- 更新 IDE 工作区配置以反映最新的提交信息" />
   </component>
 </project>
