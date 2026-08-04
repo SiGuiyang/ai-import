@@ -220,10 +220,6 @@ export function executeRule(rule: ParseRule, raw: RawData): ParsedRecord[] {
     for (const sheetName of sheetsToProcess) {
       const rows = raw.sheets[sheetName] || [];
       const skippedRows = rows.slice(rule.sourceArea.headerSkipRows);
-      
-      // dataStartRow 是 1-based 的绝对行号，需转换为 skippedRows 中的 0-based 索引
-      const dataStartIdx = rule.sourceArea.dataStartRow - 1 - rule.sourceArea.headerSkipRows;
-      const clampedDataStart = Math.max(0, dataStartIdx);
 
       let headerRow: string[];
       if (rule.sourceArea.headerRowIndex > 0) {
@@ -234,11 +230,30 @@ export function executeRule(rule: ParseRule, raw: RawData): ParsedRecord[] {
         } else {
           headerRow = skippedRows.length > 0 ? skippedRows[0].cells : [];
         }
+
+        // 若显式指定的表头行为空行（所有单元格为空），说明 rule 的 headerRowIndex
+        // 与实际文件不匹配，回退到智能检测
+        const headerNonEmpty = headerRow.filter(c => c.length > 0);
+        if (headerNonEmpty.length === 0) {
+          const detected = detectHeaderRowFromMappings(skippedRows, rule.columnMappings);
+          if (detected.length > 0) {
+            headerRow = detected;
+            // 同步修正 dataStartRow：确保数据从检测到的表头行之后开始
+            const detectedHeaderIdx = skippedRows.findIndex(r => r.cells === detected);
+            if (detectedHeaderIdx >= 0 && rule.sourceArea.headerSkipRows + detectedHeaderIdx + 1 > rule.sourceArea.dataStartRow) {
+              rule.sourceArea.dataStartRow = rule.sourceArea.headerSkipRows + detectedHeaderIdx + 1 + 1; // data 从表头下一行开始
+            }
+          }
+        }
       } else if (rule.sourceArea.headerRowIndex === 0) {
         headerRow = detectHeaderRowFromMappings(skippedRows, rule.columnMappings);
       } else {
         headerRow = skippedRows.length > 0 ? skippedRows[0].cells : [];
       }
+
+      // dataStartRow 是 1-based 的绝对行号，需转换为 skippedRows 中的 0-based 索引
+      const dataStartIdx = rule.sourceArea.dataStartRow - 1 - rule.sourceArea.headerSkipRows;
+      const clampedDataStart = Math.max(0, dataStartIdx);
 
       let dataRows: RawRow[];
       if (rule.sourceArea.dataEndMarker) {
