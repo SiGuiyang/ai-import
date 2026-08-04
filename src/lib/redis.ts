@@ -16,11 +16,11 @@ let redisClient: Redis | null = null;
 export function getRedis(): Redis | null {
   if (redisClient) return redisClient;
 
-  const url = process.env.UPSTASH_REDIS_URL;
-  const token = process.env.UPSTASH_REDIS_TOKEN;
+  const url = process.env.UPSTASH_REDIS_KV_REST_API_URL;
+  const token = process.env.UPSTASH_REDIS_KV_REST_API_TOKEN;
 
   if (!url || !token) {
-    console.warn('[Redis] UPSTASH_REDIS_URL or UPSTASH_REDIS_TOKEN not set, Redis disabled');
+    console.warn('[Redis] UPSTASH_REDIS_KV_REST_API_URL or UPSTASH_REDIS_KV_REST_API_TOKEN not set, Redis disabled');
     return null;
   }
 
