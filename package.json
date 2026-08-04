@@ -1,0 +1,42 @@
+{
+  "name": "ai-import",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "seed": "npx tsx scripts/seed-data.ts",
+    "seed:clean": "npx tsx scripts/seed-data.ts --clean-only",
+    "seed:sku": "npx tsx scripts/seed-data.ts --seed-only",
+    "seed:file": "npx tsx scripts/seed-data.ts --file-only",
+    "gen:test-file": "npx tsx scripts/generate-test-file.ts"
+  },
+  "dependencies": {
+    "@ant-design/icons": "^6.2.5",
+    "@neondatabase/serverless": "^1.1.0",
+    "@upstash/redis": "^1.38.1",
+    "antd": "^6.4.3",
+    "dayjs": "^1.11.21",
+    "mammoth": "^1.12.0",
+    "next": "16.2.6",
+    "pdfjs-dist": "^6.0.227",
+    "react": "19.2.4",
+    "react-dom": "19.2.4",
+    "uuid": "^14.0.0",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@tailwindcss/postcss": "^4",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "@types/uuid": "^10.0.0",
+    "eslint": "^9",
+    "eslint-config-next": "16.2.6",
+    "tailwindcss": "^4",
+    "tsx": "^4.23.5",
+    "typescript": "^5"
+  }
+}
