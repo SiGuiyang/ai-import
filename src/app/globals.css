@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f5f7fa;
+  --foreground: #1a1a2e;
+  --primary: #0fc6c2;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+/* 自定义滚动条 */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #d9d9d9;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #bfbfbf;
+}
+
+/* Ant Design 微调 */
+.ant-card {
+  border-radius: 12px !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+}
+
+.ant-btn-primary {
+  box-shadow: 0 2px 6px rgba(15, 198, 194, 0.3);
+}
+
+.ant-table-thead > tr > th {
+  background: #f0faf9 !important;
+  font-weight: 600;
+}

@@ -1,0 +1,340 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="删除" />
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="GitHubPullRequestSearchHistory">{
+  &quot;lastFilter&quot;: {
+    &quot;state&quot;: &quot;OPEN&quot;,
+    &quot;assignee&quot;: &quot;SiGuiyang&quot;
+  }
+}</component>
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/SiGuiyang/ai-import.git&quot;,
+    &quot;accountId&quot;: &quot;71ee4f66-ec52-48bc-a8c4-16af429c291d&quot;
+  }
+}</component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 7
+}</component>
+  <component name="ProjectId" id="3Ei8wjg6uHghiubU2pgmhXzilgH" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.TerminalTabsStorage.copyFrom.TerminalArrangementManager.252&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
+    &quot;kotlin-language-version-configured&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/Users/siguiyang/ztocc/ai-import&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;org.jetbrains.plugins.github.ui.GithubSettingsConfigurable&quot;
+  }
+}</component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-30f59d01ecdd-cffe25b9f5b3-intellij.indexing.shared.core-IU-253.28294.334" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="" />
+      <created>1780650270912</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1780650270912</updated>
+    </task>
+    <task id="LOCAL-00001" summary="feat(data): 添加数据表格组件和数据库集成功能&#10;&#10;- 实现了可编辑的数据表格组件，支持行内编辑和验证&#10;- 集成 Neon 数据库连接，创建订单和规则表结构&#10;- 添加 Excel 解析器支持多工作表数据提取&#10;- 实现数据验证逻辑，包括必填字段和重复检查&#10;- 添加全局样式配置和 Ant Design 主题定制&#10;- 实现 AI 接口调用模块用于规则生成&#10;- 添加订单列表页面展示导入的运单数据&#10;- 实现文件解析引擎支持多种格式处理&#10;- 配置项目依赖和构建工具链设置&#10;- 添加数据预览页面和错误提示功能">
+      <option name="closed" value="true" />
+      <created>1780652140269</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1780652140269</updated>
+    </task>
+    <task id="LOCAL-00002" summary="refactor(rules): 将规则存储从本地存储迁移到API接口&#10;&#10;- 移除Ant Design Input组件依赖并更新导入&#10;- 为规则页面添加加载状态指示器&#10;- 将所有规则操作方法改为异步函数并适配API调用&#10;- 更新时间戳生成逻辑避免重复计算&#10;- 在表格中显示加载状态提升用户体验&#10;- 修复字段映射数渲染中的潜在空值错误&#10;- 迁移规则管理功能到后端API接口&#10;- 更新规则编辑器组件以支持异步保存操作">
+      <option name="closed" value="true" />
+      <created>1780653718153</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1780653718153</updated>
+    </task>
+    <task id="LOCAL-00003" summary="refactor(rules): 将规则存储从本地存储迁移到API接口&#10;&#10;- 移除Ant Design Input组件依赖并更新导入&#10;- 为规则页面添加加载状态指示器&#10;- 将所有规则操作方法改为异步函数并适配API调用&#10;- 更新时间戳生成逻辑避免重复计算&#10;- 在表格中显示加载状态提升用户体验&#10;- 修复字段映射数渲染中的潜在空值错误&#10;- 迁移规则管理功能到后端API接口&#10;- 更新规则编辑器组件以支持异步保存操作">
+      <option name="closed" value="true" />
+      <created>1780655284705</created>
+      <option name="number" value="00003" />
+      <option name="presentableId" value="LOCAL-00003" />
+      <option name="project" value="LOCAL" />
+      <updated>1780655284705</updated>
+    </task>
+    <task id="LOCAL-00004" summary="feat(data-table): 增强数据表格组件功能&#10;&#10;- 添加温层、重量、件数等新字段支持&#10;- 实现单元格编辑功能，支持回车、Tab、方向键导航&#10;- 添加数据导出Excel功能&#10;- 集成数据库重复检测，实时显示重复状态&#10;- 优化错误提示和视觉反馈&#10;- 重构验证逻辑，提高性能和准确性&#10;- 添加批量删除和新增行功能&#10;- 改进样式和用户体验设计">
+      <option name="closed" value="true" />
+      <created>1780658421584</created>
+      <option name="number" value="00004" />
+      <option name="presentableId" value="LOCAL-00004" />
+      <option name="project" value="LOCAL" />
+      <updated>1780658421584</updated>
+    </task>
+    <task id="LOCAL-00005" summary="feat(api): 添加开放接口鉴权和运单查询功能&#10;&#10;- 在数据库初始化时创建 app_credentials 表用于存储应用凭证&#10;- 实现 HMAC-SHA256 签名验证机制，防止重放攻击&#10;- 添加 /api/open/credentials 接口用于管理应用凭证&#10;- 实现 /api/open/waybills/[waybillNo] 接口按运单号查询详情&#10;- 实现 /api/open/waybills 接口支持分页查询所有运单&#10;- 添加时间戳验证和应用状态检查机制&#10;- 支持模糊搜索和日期范围筛选功能">
+      <option name="closed" value="true" />
+      <created>1783058316081</created>
+      <option name="number" value="00005" />
+      <option name="presentableId" value="LOCAL-00005" />
+      <option name="project" value="LOCAL" />
+      <updated>1783058316081</updated>
+    </task>
+    <task id="LOCAL-00006" summary="功能">
+      <option name="closed" value="true" />
+      <created>1783058647406</created>
+      <option name="number" value="00006" />
+      <option name="presentableId" value="LOCAL-00006" />
+      <option name="project" value="LOCAL" />
+      <updated>1783058647406</updated>
+    </task>
+    <task id="LOCAL-00007" summary="功能">
+      <option name="closed" value="true" />
+      <created>1783067683592</created>
+      <option name="number" value="00007" />
+      <option name="presentableId" value="LOCAL-00007" />
+      <option name="project" value="LOCAL" />
+      <updated>1783067683592</updated>
+    </task>
+    <task id="LOCAL-00008" summary="功能">
+      <option name="closed" value="true" />
+      <created>1783067687583</created>
+      <option name="number" value="00008" />
+      <option name="presentableId" value="LOCAL-00008" />
+      <option name="project" value="LOCAL" />
+      <updated>1783067687583</updated>
+    </task>
+    <task id="LOCAL-00009" summary="feat(api): 添加运单异常状态管理功能&#10;&#10;- 在订单表中新增异常状态相关字段（exception_status, exception_reason, exception_time）&#10;- 创建运单异常状态索引以提升查询性能&#10;- 实现运单异常状态回写API接口，支持按运单号和SKU更新异常信息&#10;- 添加基于路径参数的运单SKU详情查询接口&#10;- 集成HMAC-SHA256鉴权机制保护开放API端点&#10;- 实现完整的请求参数校验和错误处理逻辑&#10;- 提供详细的API文档">
+      <option name="closed" value="true" />
+      <created>1783070335080</created>
+      <option name="number" value="00009" />
+      <option name="presentableId" value="LOCAL-00009" />
+      <option name="project" value="LOCAL" />
+      <updated>1783070335080</updated>
+    </task>
+    <task id="LOCAL-00010" summary="feat(db): 新增异步导入系统数据库表结构&#10;&#10;- 创建 sku_master 表用于 SKU 主数据存储&#10;- 创建 import_tasks 表用于管理导入任务状态&#10;- 创建 import_task_batches 表用于处理单元状态跟踪&#10;- 创建 import_task_errors 表用于记录行级错误明细&#10;- 创建 event_outbox 表用于事件驱动的消息队列&#10;- 创建 batch_performance_log 表用于性能监控日志&#10;- 创建 trace_events 表用于链路追踪时间线&#10;- 创建 import_task_raw_data 表用于存储原始导入数据&#10;- 为各表添加必要的索引以优化查询性能">
+      <option name="closed" value="true" />
+      <created>1785748719488</created>
+      <option name="number" value="00010" />
+      <option name="presentableId" value="LOCAL-00010" />
+      <option name="project" value="LOCAL" />
+      <updated>1785748719488</updated>
+    </task>
+    <task id="LOCAL-00011" summary="refactor(worker): 优化工作器调度机制实现 Vercel Hobby 兼容&#10;&#10;- 将 Worker 模式从 Serverless Cron 改为上传完成后 fire-and-forget 触发 Dispatcher&#10;- 移除 Vercel Cron 配置，不再依赖定时任务触发分发器&#10;- 在上传 API 中添加异步 fetch 调用，上传完成时立即触发 Dispatcher&#10;- 更新架构文档描述新的触发机制和容量规划计算&#10;- 添加手动重试机制，当 fetch 触发失败时可通过 POST 接口重试&#10;- 优化分发器触发流程，满足 Vercel Hobby 计划限制要求">
+      <option name="closed" value="true" />
+      <created>1785750288714</created>
+      <option name="number" value="00011" />
+      <option name="presentableId" value="LOCAL-00011" />
+      <option name="project" value="LOCAL" />
+      <updated>1785750288714</updated>
+    </task>
+    <task id="LOCAL-00012" summary="refactor(db): 调整数据库初始化中的索引创建异常处理&#10;&#10;- 将 CREATE INDEX 语句包装在独立的 try-catch 块中&#10;- 移除原有的注释忽略标记 /* ignore */&#10;- 统一异常处理方式为简洁的空 catch 块&#10;- 保持原有的索引创建逻辑不变">
+      <option name="closed" value="true" />
+      <created>1785750510711</created>
+      <option name="number" value="00012" />
+      <option name="presentableId" value="LOCAL-00012" />
+      <option name="project" value="LOCAL" />
+      <updated>1785750510711</updated>
+    </task>
+    <task id="LOCAL-00013" summary="feat(import): 完善文件导入系统架构与功能&#10;&#10;- 添加文件去重策略，使用 SHA-256 哈希算法和 24 小时窗口&#10;- 实现上传防重复点击，使用 useRef 和状态锁双重保护&#10;- 设计事务原子性保证，所有数据库操作在单个事务中完成&#10;- 构建完整的 Outbox 可靠性保证机制，包括状态生命周期管理&#10;- 实现 Worker 异步处理流程，支持 V2 规则映射和跨行聚合&#10;- 添加四层幂等保护机制，确保重复处理的安全性&#10;- 建立精细化错误记录体系，支持错误码分类和修复建议&#10;- 实现复合业务键 UPSERT，避免重复数据写入&#10;- 优化数据库表结构，增加 content_hash 和版本控制字段&#10;- 集成 Upstash Redis 用于缓存和分布式锁功能&#10;- 完善前端任务详情页面，支持错误筛选和详细信息展示&#10;- 重构 API 响应格式，统一数据结构和错误处理机制">
+      <option name="closed" value="true" />
+      <created>1785809861828</created>
+      <option name="number" value="00013" />
+      <option name="presentableId" value="LOCAL-00013" />
+      <option name="project" value="LOCAL" />
+      <updated>1785809861828</updated>
+    </task>
+    <task id="LOCAL-00014" summary="config(redis): 更新 Upstash Redis 环境变量名称&#10;&#10;- 将环境变量名从 UPSTASH_REDIS_URL 和 UPSTASH_REDIS_TOKEN &#10;  更改为 UPSTASH_REDIS_KV_REST_API_URL 和 UPSTASH_REDIS_KV_REST_API_TOKEN&#10;- 更新控制台警告消息中的环境变量名称&#10;- 保持 Redis 客户端初始化逻辑不变">
+      <option name="closed" value="true" />
+      <created>1785810228461</created>
+      <option name="number" value="00014" />
+      <option name="presentableId" value="LOCAL-00014" />
+      <option name="project" value="LOCAL" />
+      <updated>1785810228461</updated>
+    </task>
+    <task id="LOCAL-00015" summary="feat(import): 支持AI直接导入模式和规则引擎导入模式&#10;&#10;- 在import-worker.ts中新增importMode参数，支持'rule-engine'和'ai-direct'两种模式&#10;- AI直连模式下跳过规则映射步骤，直接将解析的数据转为MappedRow格式&#10;- 规则页面重构为双模式选择界面，支持AI生成规则和手动创建规则&#10;- 新增AI直接解析功能，可实时预览解析结果并确认导入&#10;- 新增规则引擎导入流程，通过选择规则后上传文件进行导入&#10;- 首页改版为多选项卡界面，分别展示AI智能解析和规则引擎导入入口&#10;- 添加完整的错误处理和用户提示信息">
+      <option name="closed" value="true" />
+      <created>1785810949649</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1785810949649</updated>
+    </task>
+    <task id="LOCAL-00016" summary="feat(homepage): 重构首页为多步骤AI智能导入流程&#10;&#10;- 替换标签页设计为四步骤流程（上传文件、AI分析、预览编辑、完成）&#10;- 集成AI自动分析功能，支持文件格式检测和规则自动生成&#10;- 添加数据验证、去重警告和统计信息展示&#10;- 实现异步上传和批量提交订单功能&#10;- 集成规则管理和编辑功能&#10;- 添加文件预览和数据编辑表格组件&#10;- 改进错误处理和用户反馈机制">
+      <option name="closed" value="true" />
+      <created>1785812463220</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1785812463220</updated>
+    </task>
+    <task id="LOCAL-00017" summary="feat(db): 添加订单表字段和凭证管理功能&#10;&#10;- 为orders表添加status、temperature_layer、weight、pieces、amount字段&#10;- 为trace_events表添加duration_ms字段&#10;- 创建app_credentials表用于存储应用凭证信息&#10;- 重构凭证管理页面实现新的API凭证管理功能&#10;- 更新导入任务页面UI并添加状态统计功能&#10;- 简化监控页面实现基础队列和任务监控功能">
+      <option name="closed" value="true" />
+      <created>1785817580270</created>
+      <option name="number" value="00017" />
+      <option name="presentableId" value="LOCAL-00017" />
+      <option name="project" value="LOCAL" />
+      <updated>1785817580270</updated>
+    </task>
+    <task id="LOCAL-00018" summary="feat(parser): 添加AI智能生成解析规则功能&#10;&#10;- 集成Segmented和Divider组件支持&#10;- 添加BulbOutlined和PlayCircleOutlined图标&#10;- 新增ruleSelectionMode状态管理现有规则和AI生成选项&#10;- 实现handleAiGenerateRule函数用于AI规则生成&#10;- 实现handleParseWithAiRule函数使用AI规则执行解析&#10;- 更新步骤2界面为规则选择模式包含现有规则和AI生成选项&#10;- 添加AI生成规则的进度显示和结果展示&#10;- 实现AI规则预览和编辑功能&#10;- 更新重新解析逻辑重置所有相关状态&#10;- 修改规则保存提示信息优化用户体验">
+      <option name="closed" value="true" />
+      <created>1785818558471</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1785818558471</updated>
+    </task>
+    <task id="LOCAL-00019" summary="fix(rule-engine): 修复Excel解析器和数据区域处理逻辑&#10;&#10;- 修复Excel解析器中空行过滤逻辑，确保所有行都被保留&#10;- 修正dataStartRow和headerRowIndex的索引计算，统一使用0-based索引&#10;- 添加数据起始索引边界检查，防止负数索引导致的数据截取错误&#10;- 修复数据结束行处理逻辑，正确计算slice的结束索引位置&#10;- 优化头部行查找逻辑，增加索引范围验证和默认回退机制">
+      <option name="closed" value="true" />
+      <created>1785819038363</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1785819038363</updated>
+    </task>
+    <task id="LOCAL-00020" summary="fix(excel-parser): 修复Excel解析器中缺失的空行和空单元格&#10;&#10;- 在range.s.r之前补齐空行，确保rows[r]始终对应Excel第r行（0-based）&#10;- 在range.s.c之前补齐空单元格，确保row[c]对应Excel第c列（0-based）&#10;- 解决因起始行列非零导致的数据错位问题">
+      <option name="closed" value="true" />
+      <created>1785820902761</created>
+      <option name="number" value="00020" />
+      <option name="presentableId" value="LOCAL-00020" />
+      <option name="project" value="LOCAL" />
+      <updated>1785820902761</updated>
+    </task>
+    <task id="LOCAL-00021" summary="feat(app): 添加全链路Trace导航按钮&#10;&#10;- 在页面顶部导航区域增加全链路Trace入口&#10;- 点击按钮可跳转到/traces路由页面&#10;- 与其他监控功能按钮保持一致的样式和交互方式">
+      <option name="closed" value="true" />
+      <created>1785822244742</created>
+      <option name="number" value="00021" />
+      <option name="presentableId" value="LOCAL-00021" />
+      <option name="project" value="LOCAL" />
+      <updated>1785822244742</updated>
+    </task>
+    <task id="LOCAL-00022" summary="feat(rule-engine): 增强Excel解析规则引擎的智能检测功能&#10;&#10;- 移除硬编码的数据起始索引计算逻辑，改为动态计算&#10;- 添加表头行空值检测和智能回退机制&#10;- 当显式指定的表头行为空时自动使用智能检测功能&#10;- 同步修正数据起始行以确保从检测到的表头后开始解析&#10;- 在API层添加完整的规则验证函数validateRule&#10;- 验证规则格式、sourceArea配置、headerRowIndex、dataStartRow等必填字段&#10;- 为缺失的headerSkipRows字段设置默认值0&#10;- 统一API响应格式，将error响应改为{success: false, error: message}结构&#10;- 添加详细的解析过程日志输出便于调试&#10;- 添加解析结果为空时的警告提示&#10;- 移除未使用的parseExcelAsArrays导入">
+      <option name="closed" value="true" />
+      <created>1785823441732</created>
+      <option name="number" value="00022" />
+      <option name="presentableId" value="LOCAL-00022" />
+      <option name="project" value="LOCAL" />
+      <updated>1785823441732</updated>
+    </task>
+    <task id="LOCAL-00023" summary="chore(project): 删除项目配置文件和依赖项&#10;&#10;- 移除 .gitignore 配置文件&#10;- 删除 package.json 项目依赖配置&#10;- 移除 tsconfig.json TypeScript 配置&#10;- 清理 .idea 项目配置文件夹相关文件&#10;- 删除 vercel.json 部署配置&#10;- 移除全局样式文件 globals.css&#10;- 清理 README.md 项目文档&#10;- 删除 public 目录下的 vercel.svg 文件">
+      <option name="closed" value="true" />
+      <created>1785825260010</created>
+      <option name="number" value="00023" />
+      <option name="presentableId" value="LOCAL-00023" />
+      <option name="project" value="LOCAL" />
+      <updated>1785825260010</updated>
+    </task>
+    <task id="LOCAL-00024" summary="docs: 删除项目架构文档、包配置和部署配置&#10;&#10;- 移除 ARCHITECTURE.md 重构假设说明文档&#10;- 删除 package.json 项目依赖配置文件&#10;- 移除 README.md 项目说明和快速开始文档&#10;- 清理 vercel.json Vercel 部署配置文件">
+      <option name="closed" value="true" />
+      <created>1785825334772</created>
+      <option name="number" value="00024" />
+      <option name="presentableId" value="LOCAL-00024" />
+      <option name="project" value="LOCAL" />
+      <updated>1785825334772</updated>
+    </task>
+    <task id="LOCAL-00025" summary="feat(core): 添加开放接口鉴权和数据表格组件&#10;&#10;- 实现了基于 HMAC-SHA256 的开放接口鉴权功能&#10;- 创建了可编辑的数据表格组件支持 Excel 导入导出&#10;- 集成 Neon 数据库并创建了订单和解析规则表结构&#10;- 添加了 Excel 解析器和规则引擎核心功能&#10;- 配置了 Eslint 和全局样式主题&#10;- 实现了 AI 接口调用功能用于智能解析">
+      <option name="closed" value="true" />
+      <created>1785825434844</created>
+      <option name="number" value="00025" />
+      <option name="presentableId" value="LOCAL-00025" />
+      <option name="project" value="LOCAL" />
+      <updated>1785825434844</updated>
+    </task>
+    <task id="LOCAL-00026" summary="删除">
+      <option name="closed" value="true" />
+      <created>1785825852909</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1785825852909</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
+    <servers />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="OPEN_GENERIC_TABS">
+      <map>
+        <entry key="6a37f538-ccfe-41d3-97b0-396a9f4ccafa" value="TOOL_WINDOW" />
+      </map>
+    </option>
+    <option name="TAB_STATES">
+      <map>
+        <entry key="6a37f538-ccfe-41d3-97b0-396a9f4ccafa">
+          <value>
+            <State>
+              <option name="FILTERS">
+                <map>
+                  <entry key="branch">
+                    <value>
+                      <list>
+                        <option value="HEAD" />
+                      </list>
+                    </value>
+                  </entry>
+                  <entry key="roots">
+                    <value>
+                      <list>
+                        <option value="$PROJECT_DIR$" />
+                      </list>
+                    </value>
+                  </entry>
+                </map>
+              </option>
+              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
+            </State>
+          </value>
+        </entry>
+        <entry key="MAIN">
+          <value>
+            <State />
+          </value>
+        </entry>
+      </map>
+    </option>
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="feat(data): 添加数据表格组件和数据库集成功能&#10;&#10;- 实现了可编辑的数据表格组件，支持行内编辑和验证&#10;- 集成 Neon 数据库连接，创建订单和规则表结构&#10;- 添加 Excel 解析器支持多工作表数据提取&#10;- 实现数据验证逻辑，包括必填字段和重复检查&#10;- 添加全局样式配置和 Ant Design 主题定制&#10;- 实现 AI 接口调用模块用于规则生成&#10;- 添加订单列表页面展示导入的运单数据&#10;- 实现文件解析引擎支持多种格式处理&#10;- 配置项目依赖" />
+    <MESSAGE value="refactor(rules): 将规则存储从本地存储迁移到API接口&#10;&#10;- 移除Ant Design Input组件依赖并更新导入&#10;- 为规则页面添加加载状态指示器&#10;- 将所有规则操作方法改为异步函数并适配API调用&#10;- 更新时间戳生成逻辑避免重复计算&#10;- 在表格中显示加载状态提升用户体验&#10;- 修复字段映射数渲染中的潜在空值错误&#10;- 迁移规则管理功能到后端API接口&#10;- 更新规则编辑器组件以支持异步保存操作" />
+    <MESSAGE value="feat(data-table): 增强数据表格组件功能&#10;&#10;- 添加温层、重量、件数等新字段支持&#10;- 实现单元格编辑功能，支持回车、Tab、方向键导航&#10;- 添加数据导出Excel功能&#10;- 集成数据库重复检测，实时显示重复状态&#10;- 优化错误提示和视觉反馈&#10;- 重构验证逻辑，提高性能和准确性&#10;- 添加批量删除和新增行功能&#10;- 改进样式和用户体验设计" />
+    <MESSAGE value="feat(api): 添加开放接口鉴权和运单查询功能&#10;&#10;- 在数据库初始化时创建 app_credentials 表用于存储应用凭证&#10;- 实现 HMAC-SHA256 签名验证机制，防止重放攻击&#10;- 添加 /api/open/credentials 接口用于管理应用凭证&#10;- 实现 /api/open/waybills/[waybillNo] 接口按运单号查询详情&#10;- 实现 /api/open/waybills 接口支持分页查询所有运单&#10;- 添加时间戳验证和应用状态检查机制&#10;- 支持模糊搜索和日期范围筛选功能" />
+    <MESSAGE value="功能" />
+    <MESSAGE value="feat(api): 添加运单异常状态管理功能&#10;&#10;- 在订单表中新增异常状态相关字段（exception_status, exception_reason, exception_time）&#10;- 创建运单异常状态索引以提升查询性能&#10;- 实现运单异常状态回写API接口，支持按运单号和SKU更新异常信息&#10;- 添加基于路径参数的运单SKU详情查询接口&#10;- 集成HMAC-SHA256鉴权机制" />
+    <MESSAGE value="feat(db): 新增异步导入系统数据库表结构&#10;&#10;- 创建 sku_master 表用于 SKU 主数据存储&#10;- 创建 import_tasks 表用于管理导入任务状态&#10;- 创建 import_task_batches 表用于处理单元状态跟踪&#10;- 创建 import_task_errors 表用于记录行级错误明细&#10;- 创建 event_outbox 表用于事件驱动的消息队列&#10;- 创建 batch_performance_log 表用于性能监控日志&#10;- 创建 trace_events 表用于链路追踪时间线&#10;- 创建 import_task_raw_data 表用于存储原始导入数据&#10;- 为各表添加必要的索引以优化查询性能" />
+    <MESSAGE value="refactor(worker): 优化工作器调度机制实现 Vercel Hobby 兼容&#10;&#10;- 将 Worker 模式从 Serverless Cron 改为上传完成后 fire-and-forget 触发 Dispatcher&#10;- 移除 Vercel Cron 配置，不再依赖定时任务触发分发器&#10;- 在上传 API 中添加异步 fetch 调用，上传完成时立即触发 Dispatcher&#10;- 更新架构文档描述新的触发机制和容量规划计算&#10;- 添加手动重试机制，当 fetch 触发失败时可通过 POST 接口重试&#10;- 优化分发器触发流程，满足 Vercel Hobby 计划限制要求" />
+    <MESSAGE value="refactor(db): 调整数据库初始化中的索引创建异常处理&#10;&#10;- 将 CREATE INDEX 语句包装在独立的 try-catch 块中&#10;- 移除原有的注释忽略标记 /* ignore */&#10;- 统一异常处理方式为简洁的空 catch 块&#10;- 保持原有的索引创建逻辑不变" />
+    <MESSAGE value="feat(import): 完善文件导入系统架构与功能&#10;&#10;- 添加文件去重策略，使用 SHA-256 哈希算法和 24 小时窗口&#10;- 实现上传防重复点击，使用 useRef 和状态锁双重保护&#10;- 设计事务原子性保证，所有数据库操作在单个事务中完成&#10;- 构建完整的 Outbox 可靠性保证机制，包括状态生命周期管理&#10;- 实现 Worker 异步处理流程，支持 V2 规则映射和跨行聚合&#10;- 添加四层幂等保护机制，确保重复处理的安全性&#10;- 建立精细化错误记录体系，支持错误码分类和修复建议&#10;- 实现复合业务键 UPSERT，避免重复数据写入&#10;- 优化数据库表结构，增加 content_hash 和版本控制字段&#10;- 集成 Upstash Redis 用于缓存和分布式锁功能&#10;- 完善前端任务详情页面，支持错误筛选和详细信息展示&#10;- 重构 API 响应格式，统一数据结构和错误处理机制" />
+    <MESSAGE value="config(redis): 更新 Upstash Redis 环境变量名称&#10;&#10;- 将环境变量名从 UPSTASH_REDIS_URL 和 UPSTASH_REDIS_TOKEN &#10;  更改为 UPSTASH_REDIS_KV_REST_API_URL 和 UPSTASH_REDIS_KV_REST_API_TOKEN&#10;- 更新控制台警告消息中的环境变量名称&#10;- 保持 Redis 客户端初始化逻辑不变" />
+    <MESSAGE value="feat(import): 支持AI直接导入模式和规则引擎导入模式&#10;&#10;- 在import-worker.ts中新增importMode参数，支持'rule-engine'和'ai-direct'两种模式&#10;- AI直连模式下跳过规则映射步骤，直接将解析的数据转为MappedRow格式&#10;- 规则页面重构为双模式选择界面，支持AI生成规则和手动创建规则&#10;- 新增AI直接解析功能，可实时预览解析结果并确认导入&#10;- 新增规则引擎导入流程，通过选择规则后上传文件进行导入&#10;- 首页改版为多选项卡界面，分别展示AI智能解析和规则引擎导入入口&#10;- 添加完整的错误处理和用户提示信息" />
+    <MESSAGE value="feat(homepage): 重构首页为多步骤AI智能导入流程&#10;&#10;- 替换标签页设计为四步骤流程（上传文件、AI分析、预览编辑、完成）&#10;- 集成AI自动分析功能，支持文件格式检测和规则自动生成&#10;- 添加数据验证、去重警告和统计信息展示&#10;- 实现异步上传和批量提交订单功能&#10;- 集成规则管理和编辑功能&#10;- 添加文件预览和数据编辑表格组件&#10;- 改进错误处理和用户反馈机制" />
+    <MESSAGE value="feat(db): 添加订单表字段和凭证管理功能&#10;&#10;- 为orders表添加status、temperature_layer、weight、pieces、amount字段&#10;- 为trace_events表添加duration_ms字段&#10;- 创建app_credentials表用于存储应用凭证信息&#10;- 重构凭证管理页面实现新的API凭证管理功能&#10;- 更新导入任务页面UI并添加状态统计功能&#10;- 简化监控页面实现基础队列和任务监控功能" />
+    <MESSAGE value="feat(parser): 添加AI智能生成解析规则功能&#10;&#10;- 集成Segmented和Divider组件支持&#10;- 添加BulbOutlined和PlayCircleOutlined图标&#10;- 新增ruleSelectionMode状态管理现有规则和AI生成选项&#10;- 实现handleAiGenerateRule函数用于AI规则生成&#10;- 实现handleParseWithAiRule函数使用AI规则执行解析&#10;- 更新步骤2界面为规则选择模式包含现有规则和AI生成选项&#10;- 添加AI生成规则的进度显示和结果展示&#10;- 实现AI规则预览和编辑功能&#10;- 更新重新解析逻辑重置所有相关状态&#10;- 修改规则保存提示信息优化用户体验" />
+    <MESSAGE value="fix(rule-engine): 修复Excel解析器和数据区域处理逻辑&#10;&#10;- 修复Excel解析器中空行过滤逻辑，确保所有行都被保留&#10;- 修正dataStartRow和headerRowIndex的索引计算，统一使用0-based索引&#10;- 添加数据起始索引边界检查，防止负数索引导致的数据截取错误&#10;- 修复数据结束行处理逻辑，正确计算slice的结束索引位置&#10;- 优化头部行查找逻辑" />
+    <MESSAGE value="fix(excel-parser): 修复Excel解析器中缺失的空行和空单元格&#10;&#10;- 在range.s.r之前补齐空行，确保rows[r]始终对应Excel第r行（0-based）&#10;- 在range.s.c之前补齐空单元格，确保row[c]对应Excel第c列（0-based）&#10;- 解决因起始行列非零导致的数据错位问题" />
+    <MESSAGE value="feat(app): 添加全链路Trace导航按钮&#10;&#10;- 在页面顶部导航区域增加全链路Trace入口&#10;- 点击按钮可跳转到/traces路由页面&#10;- 与其他监控功能按钮保持一致的样式和交互方式" />
+    <MESSAGE value="feat(rule-engine): 增强Excel解析规则引擎的智能检测功能&#10;&#10;- 移除硬编码的数据起始索引计算逻辑，改为动态计算&#10;- 添加表头行空值检测和智能回退机制&#10;- 当显式指定的表头行为空时自动使用智能检测功能&#10;- 同步修正数据起始行以确保从检测到的表头后开始解析&#10;- 在API层添加完整的规则验证函数validateRule&#10;- 验证规则格式、sourceArea配置、headerRowIndex、dataStartRow等必填字段&#10;- 为缺失的headerSkipRows字段设置默认值0&#10;- 统一API响应格式，将error响应改为{success: false, error: message}结构&#10;- 添加详细的解析过程日志输出便于调试&#10;- 添加解析结果为空时的警告提示&#10;- 移除未使用的parseExcelAsArrays导入" />
+    <MESSAGE value="chore(project): 删除项目配置文件和依赖项&#10;&#10;- 移除 .gitignore 配置文件&#10;- 删除 package.json 项目依赖配置&#10;- 移除 tsconfig.json TypeScript 配置&#10;- 清理 .idea 项目配置文件夹相关文件&#10;- 删除 vercel.json 部署配置&#10;- 移除全局样式文件 globals.css&#10;- 清理 README.md 项目文档&#10;- 删除 public 目录下的 vercel.svg 文件" />
+    <MESSAGE value="docs: 删除项目架构文档、包配置和部署配置&#10;&#10;- 移除 ARCHITECTURE.md 重构假设说明文档&#10;- 删除 package.json 项目依赖配置文件&#10;- 移除 README.md 项目说明和快速开始文档&#10;- 清理 vercel.json Vercel 部署配置文件" />
+    <MESSAGE value="feat(core): 添加开放接口鉴权和数据表格组件&#10;&#10;- 实现了基于 HMAC-SHA256 的开放接口鉴权功能&#10;- 创建了可编辑的数据表格组件支持 Excel 导入导出&#10;- 集成 Neon 数据库并创建了订单和解析规则表结构&#10;- 添加了 Excel 解析器和规则引擎核心功能&#10;- 配置了 Eslint 和全局样式主题&#10;- 实现了 AI 接口调用功能用于智能解析" />
+    <MESSAGE value="删除" />
+    <option name="LAST_COMMIT_MESSAGE" value="删除" />
+  </component>
+</project>
