@@ -221,9 +221,19 @@ export function executeRule(rule: ParseRule, raw: RawData): ParsedRecord[] {
       const rows = raw.sheets[sheetName] || [];
       const skippedRows = rows.slice(rule.sourceArea.headerSkipRows);
       
+      // dataStartRow 是 1-based 的绝对行号，需转换为 skippedRows 中的 0-based 索引
+      const dataStartIdx = rule.sourceArea.dataStartRow - 1 - rule.sourceArea.headerSkipRows;
+      const clampedDataStart = Math.max(0, dataStartIdx);
+
       let headerRow: string[];
-      if (rule.sourceArea.headerRowIndex > 0 && rule.sourceArea.headerRowIndex <= skippedRows.length) {
-        headerRow = skippedRows[rule.sourceArea.headerRowIndex - 1].cells;
+      if (rule.sourceArea.headerRowIndex > 0) {
+        // headerRowIndex 是 1-based 绝对行号，在 skippedRows 中的 0-based 位置
+        const headerIdx = rule.sourceArea.headerRowIndex - 1 - rule.sourceArea.headerSkipRows;
+        if (headerIdx >= 0 && headerIdx < skippedRows.length) {
+          headerRow = skippedRows[headerIdx].cells;
+        } else {
+          headerRow = skippedRows.length > 0 ? skippedRows[0].cells : [];
+        }
       } else if (rule.sourceArea.headerRowIndex === 0) {
         headerRow = detectHeaderRowFromMappings(skippedRows, rule.columnMappings);
       } else {
@@ -234,14 +244,16 @@ export function executeRule(rule: ParseRule, raw: RawData): ParsedRecord[] {
       if (rule.sourceArea.dataEndMarker) {
         const endIdx = skippedRows.findIndex(r => r.cells.join('').includes(rule.sourceArea.dataEndMarker!));
         if (endIdx >= 0) {
-          dataRows = skippedRows.slice(rule.sourceArea.dataStartRow, endIdx);
+          dataRows = skippedRows.slice(clampedDataStart, endIdx);
         } else {
-          dataRows = skippedRows.slice(rule.sourceArea.dataStartRow);
+          dataRows = skippedRows.slice(clampedDataStart);
         }
       } else if (rule.sourceArea.dataEndRow !== undefined) {
-        dataRows = skippedRows.slice(rule.sourceArea.dataStartRow, rule.sourceArea.dataEndRow);
+        // dataEndRow 是 1-based 绝对行号，slice 的 end 是 exclusive，减去 headerSkipRows
+        const dataEndIdx = rule.sourceArea.dataEndRow - rule.sourceArea.headerSkipRows;
+        dataRows = skippedRows.slice(clampedDataStart, dataEndIdx);
       } else {
-        dataRows = skippedRows.slice(rule.sourceArea.dataStartRow);
+        dataRows = skippedRows.slice(clampedDataStart);
       }
 
       const tailVals = extractTailValues(rows, rule.tailExtractions);

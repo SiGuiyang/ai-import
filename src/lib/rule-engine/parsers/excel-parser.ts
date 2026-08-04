@@ -23,10 +23,8 @@ export function parseExcel(buffer: ArrayBuffer | Buffer): SheetData[] {
         const val = cell ? cell.v : '';
         row.push(val !== undefined && val !== null ? String(val).trim() : '');
       }
-      if (row.some(c => c.length > 0)) {
-        rows.push(row);
-        maxCols = Math.max(maxCols, row.length);
-      }
+      rows.push(row);
+      maxCols = Math.max(maxCols, row.length);
     }
     return { name, rows, maxCols };
   });
