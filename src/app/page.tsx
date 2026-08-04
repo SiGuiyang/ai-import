@@ -5,14 +5,15 @@ import { useRouter } from 'next/navigation';
 import {
   Upload, Button, Select, Card, message, Typography, Spin, Space,
   Modal, Input, Steps, Progress, Alert, Tag,
-  Result, Descriptions, Statistic
+  Result, Descriptions, Statistic, Segmented, Divider
 } from 'antd';
 import {
   InboxOutlined, PlusOutlined, DownloadOutlined,
   EditOutlined, CheckCircleOutlined,
   CloseCircleOutlined, ArrowLeftOutlined, RobotOutlined,
   ThunderboltOutlined, FileTextOutlined, SafetyCertificateOutlined,
-  ReloadOutlined, ExclamationCircleOutlined
+  ReloadOutlined, ExclamationCircleOutlined, BulbOutlined,
+  PlayCircleOutlined
 } from '@ant-design/icons';
 import { v4 as uuidv4 } from 'uuid';
 import * as XLSX from 'xlsx';
@@ -56,6 +57,7 @@ export default function HomePage() {
   const [ruleToEdit, setRuleToEdit] = useState<any>(null);
   const [parseMode, setParseMode] = useState<ParseMode>('auto');
   const [aiAnalysisStatus, setAiAnalysisStatus] = useState<'idle' | 'analyzing' | 'generating-rule' | 'parsing' | 'done' | 'error'>('idle');
+  const [ruleSelectionMode, setRuleSelectionMode] = useState<'existing' | 'ai-generate'>('existing');
 
   useEffect(() => {
     getRules().then(setRules).catch(() => {});
@@ -197,10 +199,116 @@ export default function HomePage() {
     setSelectedRuleId('');
     setParsedData([]);
     setParseError('');
-    setAiAnalysisStatus('analyzing');
+    setAiAnalysisStatus('idle');
     setParseMode('auto');
-    startAutoAnalysis(file);
+    setRuleSelectionMode('existing');
+    setAiGeneratedRule(null);
+    setFilePreview('');
     return false;
+  };
+
+  // === AI 智能生成规则（Step 2 中调用，不自动解析） ===
+  const handleAiGenerateRule = async () => {
+    if (!file) return;
+    setAiLoading(true);
+    setAiAnalysisStatus('generating-rule');
+
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+
+      const res = await fetch('/api/ai/generate-rule', {
+        method: 'POST',
+        body: formData,
+      });
+
+      const data = await res.json();
+      if (data.rule) {
+        setAiGeneratedRule(data.rule);
+        setFilePreview(data.filePreview || '');
+        setAiAnalysisStatus('done');
+      } else {
+        setAiAnalysisStatus('error');
+        setParseError(data.error || 'AI 生成规则失败');
+        message.error(data.error || 'AI 生成规则失败');
+      }
+    } catch (e: any) {
+      setAiAnalysisStatus('error');
+      setParseError('AI 请求失败: ' + e.message);
+      message.error('AI 请求失败: ' + e.message);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  // === 使用 AI 生成的规则执行解析 ===
+  const handleParseWithAiRule = async () => {
+    if (!file || !aiGeneratedRule) {
+      message.warning('请先生成 AI 规则');
+      return;
+    }
+
+    const now = new Date().toISOString();
+    const savedRule: ParseRule = {
+      id: uuidv4(),
+      name: aiGeneratedRule.name || `AI规则-${file.name}`,
+      fileType: aiGeneratedRule.fileType || fileType,
+      description: aiGeneratedRule.description || '',
+      sourceArea: aiGeneratedRule.sourceArea || { sheetMode: 'first', headerSkipRows: 0, headerRowIndex: 1, dataStartRow: 2 },
+      columnMappings: aiGeneratedRule.columnMappings || [],
+      tailExtractions: aiGeneratedRule.tailExtractions || [],
+      transpose: aiGeneratedRule.transpose || undefined,
+      cardSplit: aiGeneratedRule.cardSplit || undefined,
+      cellSplit: aiGeneratedRule.cellSplit || undefined,
+      groupBy: aiGeneratedRule.groupBy || undefined,
+      skipLinesRegex: aiGeneratedRule.skipLinesRegex || undefined,
+      aiGenerated: true,
+      confidence: aiGeneratedRule.confidence || 0.7,
+      warnings: aiGeneratedRule.warnings || [],
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // 先保存规则
+    await createRule(savedRule);
+    setSelectedRuleId(savedRule.id);
+    await refreshRules();
+
+    // 然后执行解析
+    setLoading(true);
+    setParseError('');
+
+    try {
+      const parseFormData = new FormData();
+      parseFormData.append('file', file);
+      parseFormData.append('rule', JSON.stringify(savedRule));
+
+      const parseRes = await fetch('/api/parse', {
+        method: 'POST',
+        body: parseFormData,
+      });
+      const parseData = await parseRes.json();
+
+      if (parseData.success && parseData.data && parseData.data.length > 0) {
+        setParsedData(parseData.data);
+        setEditingData(parseData.data);
+        setParseMode('rule');
+        setProgress({ current: parseData.totalRows, total: parseData.totalRows, percent: 100, statusText: '解析完成' });
+
+        const { errors, groupDuplicateWarning } = validateRecords(parseData.data);
+        setValidationErrors(errors);
+        setDuplicateWarnings(groupDuplicateWarning);
+        setTimeout(() => setStep(3), 500);
+      } else {
+        setParseError(parseData.error || 'AI规则解析未获得有效数据，请尝试手动选择规则');
+        message.warning(parseData.error || 'AI规则解析未获得有效数据');
+      }
+    } catch (e: any) {
+      setParseError(e.message);
+      message.error('解析请求失败: ' + e.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleNewRule = async () => {
@@ -411,7 +519,8 @@ export default function HomePage() {
     setRuleToEdit(updatedRule);
     setShowRuleEditor(false);
     setSelectedRuleId(updatedRule.id);
-    message.success('规则已更新');
+    setRuleSelectionMode('existing');
+    message.success('规则已保存，请在「已有规则」中执行解析');
   };
 
   const handleBackToFile = () => {
@@ -435,7 +544,7 @@ export default function HomePage() {
 
   const stepItems = [
     { title: '上传文件' },
-    { title: 'AI 分析' },
+    { title: '选择规则' },
     { title: '预览编辑' },
     { title: '完成' },
   ];
@@ -515,81 +624,104 @@ export default function HomePage() {
           </Card>
         )}
 
-        {/* Step 2: AI Analysis */}
+        {/* Step 2: 选择解析规则 */}
         {step === 2 && (
-          <Card>
-            {/* AI 自动分析进度 */}
-            {(aiAnalysisStatus === 'analyzing' || aiAnalysisStatus === 'generating-rule' || aiAnalysisStatus === 'parsing') && (
-              <div style={{ textAlign: 'center', padding: '48px 0' }}>
-                <Spin size="large" />
-                <div style={{ marginTop: 20 }}>
-                  <Title level={5}>
-                    <RobotOutlined style={{ color: '#0fc6c2', marginRight: 8 }} />
-                    AI 正在智能分析
-                  </Title>
-                </div>
-                <div style={{ maxWidth: 400, margin: '16px auto' }}>
-                  <Progress
-                    percent={progress.percent}
-                    strokeColor={{ '0%': '#0fc6c2', '100%': '#0bada9' }}
-                    status="active"
-                  />
-                </div>
-                <Text type="secondary">{progress.statusText}</Text>
-                <div style={{ marginTop: 16 }}>
-                  <Space direction="vertical" size={4}>
-                    <Text type={aiAnalysisStatus === 'analyzing' || aiAnalysisStatus === 'generating-rule' ? 'success' : 'secondary'}>
-                      {aiAnalysisStatus === 'analyzing' ? '✅' : '⏳'} 读取文件内容
-                    </Text>
-                    <Text type={aiAnalysisStatus === 'generating-rule' ? 'success' : 'secondary'}>
-                      {aiAnalysisStatus === 'generating-rule' ? '✅' : aiAnalysisStatus === 'parsing' ? '⏳' : '○'} AI 分析文件格式
-                    </Text>
-                    <Text type={aiAnalysisStatus === 'parsing' ? 'success' : 'secondary'}>
-                      {aiAnalysisStatus === 'parsing' ? '⏳' : '○'} 提取结构化数据
-                    </Text>
-                  </Space>
-                </div>
+          <>
+            {/* 文件信息条 */}
+            <Card style={{ marginBottom: 16 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <FileTextOutlined style={{ fontSize: 18, color: '#0fc6c2' }} />
+                <Text strong style={{ fontSize: 15 }}>{file?.name}</Text>
+                <Tag color="blue">{fileType?.toUpperCase()}</Tag>
+                <div style={{ flex: 1 }} />
+                <Button size="small" icon={<ArrowLeftOutlined />} onClick={() => setStep(1)}>
+                  重新选择文件
+                </Button>
               </div>
-            )}
+            </Card>
 
-            {/* AI 分析失败，手动模式 */}
-            {aiAnalysisStatus === 'error' && (
-              <div>
-                <Alert
-                  type="warning"
-                  showIcon
-                  icon={<ExclamationCircleOutlined />}
-                  message="AI 自动分析未能完成"
-                  description={parseError || 'AI 无法自动识别文件格式，您可以手动选择已有规则或创建新规则'}
-                  style={{ marginBottom: 16 }}
-                  action={
-                    <Button size="small" onClick={handleRetryAutoAnalysis} icon={<ReloadOutlined />}>
-                      重试AI分析
-                    </Button>
-                  }
-                />
+            {/* 解析方式选择 */}
+            <Card
+              title={
+                <span>
+                  <ThunderboltOutlined style={{ color: '#0fc6c2', marginRight: 8 }} />
+                  选择解析方式
+                </span>
+              }
+            >
+              <Segmented
+                value={ruleSelectionMode}
+                onChange={(val) => {
+                  setRuleSelectionMode(val as 'existing' | 'ai-generate');
+                  setParseError('');
+                  setAiGeneratedRule(null);
+                  setAiAnalysisStatus('idle');
+                }}
+                options={[
+                  { label: '已有规则', value: 'existing', icon: <FileTextOutlined /> },
+                  { label: 'AI 智能生成', value: 'ai-generate', icon: <RobotOutlined /> },
+                ]}
+                block
+                style={{ marginBottom: 24 }}
+              />
 
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 16 }}>
-                  <FileTextOutlined />
-                  <Text strong>{file?.name}</Text>
-                  <Tag color="blue">{fileType}</Tag>
-                </div>
+              {/* === 模式一：选择已有规则 === */}
+              {ruleSelectionMode === 'existing' && (
+                <div>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                    从已保存的解析规则中选择一个，直接对文件进行解析
+                  </Text>
 
-                <Title level={5}>手动选择解析规则</Title>
-                <Space direction="vertical" style={{ width: '100%' }}>
-                  <Select
-                    style={{ width: '100%' }}
-                    placeholder="选择已有规则"
-                    value={selectedRuleId || undefined}
-                    onChange={setSelectedRuleId}
-                    options={rules.filter(r => r.fileType === fileType).map(r => ({
-                      label: `${r.name}${r.aiGenerated ? ' (AI生成)' : ''}`,
-                      value: r.id,
-                    }))}
-                  />
-                  <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-                    <Button icon={<PlusOutlined />} onClick={handleNewRule} loading={aiLoading}>
-                      AI 辅助新建规则
+                  <div style={{ maxWidth: 600 }}>
+                    <Select
+                      style={{ width: '100%', marginBottom: 12 }}
+                      placeholder="请选择解析规则"
+                      value={selectedRuleId || undefined}
+                      onChange={setSelectedRuleId}
+                      notFoundContent="暂无匹配的规则，请先创建规则"
+                      options={rules.filter(r => r.fileType === fileType).map(r => ({
+                        label: `${r.name}${r.aiGenerated ? ' 🤖' : ''}`,
+                        value: r.id,
+                      }))}
+                    />
+                  </div>
+
+                  {/* 选中规则后的详情预览 */}
+                  {selectedRuleId && (() => {
+                    const selectedRule = rules.find(r => r.id === selectedRuleId);
+                    if (!selectedRule) return null;
+                    return (
+                      <div style={{
+                        background: '#fafafa', borderRadius: 8, padding: 16, marginBottom: 12,
+                        border: '1px solid #f0f0f0'
+                      }}>
+                        <Descriptions size="small" column={2}>
+                          <Descriptions.Item label="规则名称">{selectedRule.name}</Descriptions.Item>
+                          <Descriptions.Item label="文件类型">
+                            <Tag>{selectedRule.fileType}</Tag>
+                          </Descriptions.Item>
+                          <Descriptions.Item label="字段映射数">{selectedRule.columnMappings?.length || 0} 个</Descriptions.Item>
+                          <Descriptions.Item label="来源">
+                            {selectedRule.aiGenerated ? <Tag color="purple">AI生成</Tag> : <Tag>手动创建</Tag>}
+                          </Descriptions.Item>
+                          {selectedRule.description && (
+                            <Descriptions.Item label="描述" span={2}>{selectedRule.description}</Descriptions.Item>
+                          )}
+                        </Descriptions>
+                      </div>
+                    );
+                  })()}
+
+                  <Space style={{ marginTop: 8 }}>
+                    <Button
+                      type="primary"
+                      icon={<PlayCircleOutlined />}
+                      onClick={handleParse}
+                      disabled={!selectedRuleId}
+                      loading={loading}
+                      style={{ background: '#0fc6c2', borderColor: '#0fc6c2' }}
+                    >
+                      执行解析
                     </Button>
                     <Button
                       icon={<EditOutlined />}
@@ -602,25 +734,199 @@ export default function HomePage() {
                         }
                       }}
                     >
-                      编辑规则
+                      编辑此规则
                     </Button>
-                  </div>
-                </Space>
-                <div style={{ marginTop: 24, display: 'flex', gap: 8 }}>
-                  <Button onClick={() => setStep(1)} icon={<ArrowLeftOutlined />}>返回</Button>
-                  <Button type="primary" onClick={handleParse} disabled={!selectedRuleId} loading={loading}>
-                    执行解析
-                  </Button>
+                    <Button
+                      icon={<PlusOutlined />}
+                      onClick={() => router.push('/rules/new')}
+                    >
+                      创建新规则
+                    </Button>
+                  </Space>
+
+                  {loading && (
+                    <div style={{ marginTop: 16 }}>
+                      <Progress percent={progress.percent} strokeColor="#0fc6c2" />
+                      <Text type="secondary">{progress.statusText}</Text>
+                    </div>
+                  )}
                 </div>
-                {loading && (
-                  <div style={{ marginTop: 16 }}>
-                    <Progress percent={progress.percent} />
-                    <Text type="secondary">{progress.statusText}</Text>
-                  </div>
-                )}
-              </div>
-            )}
-          </Card>
+              )}
+
+              {/* === 模式二：AI 智能生成规则 === */}
+              {ruleSelectionMode === 'ai-generate' && (
+                <div>
+                  <Text type="secondary" style={{ display: 'block', marginBottom: 12 }}>
+                    使用 AI 自动分析文件结构，智能生成解析规则，确认后即可使用
+                  </Text>
+
+                  {/* AI 未开始 */}
+                  {aiAnalysisStatus === 'idle' && (
+                    <div style={{ textAlign: 'center', padding: '32px 0' }}>
+                      <RobotOutlined style={{ fontSize: 48, color: '#0fc6c2', marginBottom: 16 }} />
+                      <div style={{ marginBottom: 8 }}>
+                        <Text>AI 将自动识别表头、字段映射和数据区域</Text>
+                      </div>
+                      <Button
+                        type="primary"
+                        size="large"
+                        icon={<BulbOutlined />}
+                        onClick={handleAiGenerateRule}
+                        loading={aiLoading}
+                        style={{ background: '#0fc6c2', borderColor: '#0fc6c2' }}
+                      >
+                        AI 分析生成规则
+                      </Button>
+                    </div>
+                  )}
+
+                  {/* AI 分析中 */}
+                  {aiAnalysisStatus === 'generating-rule' && (
+                    <div style={{ textAlign: 'center', padding: '48px 0' }}>
+                      <Spin size="large" />
+                      <div style={{ marginTop: 20 }}>
+                        <Title level={5}>
+                          <RobotOutlined style={{ color: '#0fc6c2', marginRight: 8 }} />
+                          AI 正在分析文件结构...
+                        </Title>
+                      </div>
+                      <Text type="secondary">正在识别表头、字段类型和数据区域</Text>
+                    </div>
+                  )}
+
+                  {/* AI 生成完成，展示规则 */}
+                  {aiAnalysisStatus === 'done' && aiGeneratedRule && (
+                    <div>
+                      <Alert
+                        type="success"
+                        showIcon
+                        message="AI 规则生成成功"
+                        description={`置信度: ${Math.round((aiGeneratedRule.confidence || 0.7) * 100)}% — 建议人工确认后再执行解析`}
+                        style={{ marginBottom: 16 }}
+                      />
+
+                      {aiGeneratedRule.warnings && aiGeneratedRule.warnings.length > 0 && (
+                        <Alert
+                          type="warning"
+                          showIcon
+                          style={{ marginBottom: 12 }}
+                          message="AI 推测标注"
+                          description={aiGeneratedRule.warnings.map((w: string, i: number) => (
+                            <div key={i}>- {w}</div>
+                          ))}
+                        />
+                      )}
+
+                      {/* 文件预览 */}
+                      {filePreview && (
+                        <div style={{ marginBottom: 16 }}>
+                          <Text strong>文件内容预览：</Text>
+                          <pre style={{
+                            background: '#f5f5f5', padding: 12, borderRadius: 8,
+                            maxHeight: 160, overflow: 'auto', fontSize: 12, marginTop: 8,
+                            whiteSpace: 'pre-wrap', wordBreak: 'break-all'
+                          }}>
+                            {filePreview}
+                          </pre>
+                        </div>
+                      )}
+
+                      {/* 规则详情 */}
+                      <div style={{ marginBottom: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
+                          <Text strong>AI 生成的规则配置：</Text>
+                          <Button
+                            size="small"
+                            type="link"
+                            icon={<EditOutlined />}
+                            onClick={() => {
+                              const now = new Date().toISOString();
+                              const tempRule: ParseRule = {
+                                id: uuidv4(),
+                                name: aiGeneratedRule.name || `AI-${file?.name}`,
+                                fileType: aiGeneratedRule.fileType || fileType,
+                                description: aiGeneratedRule.description || '',
+                                sourceArea: aiGeneratedRule.sourceArea || { sheetMode: 'first', headerSkipRows: 0, headerRowIndex: 1, dataStartRow: 2 },
+                                columnMappings: aiGeneratedRule.columnMappings || [],
+                                tailExtractions: aiGeneratedRule.tailExtractions || [],
+                                aiGenerated: true,
+                                confidence: aiGeneratedRule.confidence || 0.7,
+                                warnings: aiGeneratedRule.warnings || [],
+                                createdAt: now,
+                                updatedAt: now,
+                              };
+                              setRuleToEdit(tempRule);
+                              setShowRuleEditor(true);
+                            }}
+                          >
+                            在编辑器中查看/修改
+                          </Button>
+                        </div>
+                        <pre style={{
+                          background: '#f5f5f5', padding: 12, borderRadius: 8,
+                          maxHeight: 240, overflow: 'auto', fontSize: 12,
+                          border: '1px solid #e8e8e8'
+                        }}>
+                          {JSON.stringify(aiGeneratedRule, null, 2)}
+                        </pre>
+                      </div>
+
+                      <Divider />
+
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+                        <Button
+                          type="primary"
+                          size="large"
+                          icon={<PlayCircleOutlined />}
+                          onClick={handleParseWithAiRule}
+                          loading={loading}
+                          style={{ background: '#0fc6c2', borderColor: '#0fc6c2' }}
+                        >
+                          使用此规则解析文件
+                        </Button>
+                        <Button
+                          icon={<ReloadOutlined />}
+                          onClick={handleAiGenerateRule}
+                          disabled={aiLoading}
+                        >
+                          重新生成
+                        </Button>
+                      </div>
+
+                      {loading && (
+                        <div style={{ marginTop: 16 }}>
+                          <Progress percent={progress.percent} strokeColor="#0fc6c2" />
+                          <Text type="secondary">{progress.statusText}</Text>
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* AI 生成失败 */}
+                  {aiAnalysisStatus === 'error' && (
+                    <div>
+                      <Alert
+                        type="warning"
+                        showIcon
+                        icon={<ExclamationCircleOutlined />}
+                        message="AI 规则生成失败"
+                        description={parseError || 'AI 无法识别此文件格式，请尝试手动选择已有规则'}
+                        style={{ marginBottom: 16 }}
+                        action={
+                          <Button size="small" onClick={handleAiGenerateRule} icon={<ReloadOutlined />}>
+                            重试
+                          </Button>
+                        }
+                      />
+                      <Button onClick={() => setRuleSelectionMode('existing')}>
+                        切换到已有规则
+                      </Button>
+                    </div>
+                  )}
+                </div>
+              )}
+            </Card>
+          </>
         )}
 
         {/* Step 3: Preview & Edit */}
@@ -676,7 +982,15 @@ export default function HomePage() {
                 </div>
                 <Space>
                   <Button icon={<DownloadOutlined />} onClick={handleExport}>导出 Excel</Button>
-                  <Button icon={<ArrowLeftOutlined />} onClick={() => { setStep(2); setAiAnalysisStatus('error'); }}>
+                  <Button icon={<ArrowLeftOutlined />} onClick={() => {
+                    setStep(2);
+                    setAiAnalysisStatus('idle');
+                    setAiGeneratedRule(null);
+                    setFilePreview('');
+                    setParseError('');
+                    setSelectedRuleId('');
+                    setRuleSelectionMode('existing');
+                  }}>
                     重新解析
                   </Button>
                   <Button
