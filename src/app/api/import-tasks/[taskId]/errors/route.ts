@@ -11,7 +11,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { initDB, getSql } from '@/lib/db';
-import { ERROR_CODES } from '@/lib/types';
+import { ERROR_CODES, SUGGESTED_FIXES } from '@/lib/types';
 
 export async function GET(
   req: NextRequest,
@@ -82,9 +82,11 @@ export async function GET(
       rowNumber: e.row_number,
       fieldName: e.field_name,
       rawValue: e.raw_value,
+      rawValueMasked: e.raw_value_masked || e.raw_value,
       errorCode: e.error_code,
       errorName: ERROR_CODES[e.error_code] || e.error_code,
       errorReason: e.error_reason,
+      suggestedFix: e.suggested_fix || SUGGESTED_FIXES[e.error_code] || '请检查数据后重试',
       traceId: e.trace_id,
       createdAt: e.created_at,
     }));

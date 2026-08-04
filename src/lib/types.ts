@@ -13,6 +13,13 @@ export interface ColumnMapping {
   required: boolean;
 }
 
+/** 类型转换规则 */
+export interface TypeConversion {
+  field: string;
+  targetType: 'string' | 'number' | 'integer' | 'date' | 'boolean';
+  dateFormat?: string;
+}
+
 export interface TailExtraction {
   field: string;
   rowMarker: string;
@@ -58,6 +65,7 @@ export interface ParseRule {
   description?: string;
   sourceArea: SourceArea;
   columnMappings: ColumnMapping[];
+  typeConversions?: TypeConversion[];
   tailExtractions: TailExtraction[];
   transpose?: TransposeConfig;
   cardSplit?: CardSplitConfig;
@@ -115,6 +123,7 @@ export interface BatchSubmitResult {
 export interface StoredOrder {
   id: string;
   external_code?: string;
+  line_no: number;
   receiver_store?: string;
   receiver_name?: string;
   receiver_phone?: string;
@@ -172,6 +181,7 @@ export interface ImportTask {
   traceId: string;
   degraded: boolean;
   degradedReason?: string;
+  contentHash?: string;
   createdAt: string;
   completedAt?: string;
 }
@@ -185,6 +195,7 @@ export interface ImportTaskBatch {
   startRow: number;
   endRow: number;
   status: BatchStatus;
+  version: number;
   retryCount: number;
   lockedAt?: string;
   completedAt?: string;
@@ -202,6 +213,7 @@ export interface ImportTaskError {
   rawValue: string;
   errorCode: string;
   errorReason: string;
+  suggestedFix?: string;
   traceId: string;
   createdAt: string;
 }
@@ -223,7 +235,7 @@ export interface OutboxEvent {
   aggregateId: string;
   eventType: string;
   payload: Record<string, unknown>;
-  status: 'PENDING' | 'SENT' | 'FAILED';
+  status: 'PENDING' | 'SENT' | 'FAILED' | 'SUCCEEDED';
   retryCount: number;
   nextRetryAt?: string;
   createdAt: string;
@@ -267,7 +279,38 @@ export const ERROR_CODES: Record<string, string> = {
   E006: '规则映射失败',
   E007: '数据库写入失败',
   E008: '文件格式不支持',
+  E009: 'SKU 校验已跳过',
+  SYS001: '系统异常',
 };
+
+/** 修复建议映射（每个错误码对应具体可操作的修复方式） */
+export const SUGGESTED_FIXES: Record<string, string> = {
+  E001: '请检查 SKU 编码是否正确，或在商品主数据中创建该 SKU',
+  E002: '请补充缺失字段的值后重新导入',
+  E003: '请修正为有效的 11 位手机号或带区号的固话号码',
+  E004: '请将数量修改为正整数（≥ 1）',
+  E005: '请为每个外部编码只保留一行，多个 SKU 请使用不同的行',
+  E006: '请检查映射规则的字段名、类型转换和目标类型的匹配关系',
+  E007: '请稍后重试导入，如持续失败请联系技术支持',
+  E008: '请使用支持的格式：.xlsx、.xls、.docx',
+  E009: 'SKU 主数据服务异常，已跳过校验，请在服务恢复后对相关数据执行补校验',
+  SYS001: '系统处理异常，请稍后重试或联系技术支持查看链路追踪',
+};
+
+/** 敏感字段列表（phone / idcard / name 等应在 raw_value 中脱敏） */
+export const SENSITIVE_FIELDS = new Set([
+  'receiver_phone',
+  'phone',
+  'mobile',
+  'tel',
+  'receiver_name',
+  'id_card',
+  'id_number',
+  'address',
+  'receiver_address',
+  'email',
+  'bank_account',
+]);
 
 /** 上传接口响应 */
 export interface UploadResponse {
@@ -291,9 +334,15 @@ export interface TaskProgressResponse {
   completedBatches: number;
   degraded: boolean;
   degradedReason?: string;
+  /** 跳过 SKU 校验的行数 */
+  degradedSkuRows: number;
   traceId: string;
   createdAt: string;
   completedAt?: string;
+  /** 当前吞吐量：行/秒 */
+  throughput: number;
+  /** 预计剩余时间：秒（任务完成则为 0） */
+  estimatedRemainingSec: number;
 }
 
 /** 监控摘要 */
@@ -313,4 +362,64 @@ export interface MonitorSummary {
   }[];
   slowBatches: BatchPerformanceLog[];
   recentTasks: ImportTask[];
+}
+
+// ============ 模块九：全链路 Trace 搜索 ============
+
+/** Trace 搜索参数 */
+export interface TraceSearchParams {
+  taskId?: string;
+  fileName?: string;
+  batchIndex?: number;
+  rowFrom?: number;
+  rowTo?: number;
+  errorCode?: string;
+  page?: number;
+  pageSize?: number;
+}
+
+/** Trace 搜索结果项 */
+export interface TraceSearchResult {
+  traceId: string;
+  taskId: string;
+  fileName: string;
+  status: string;
+  totalRows: number;
+  successRows: number;
+  failedRows: number;
+  totalErrors: number;
+  totalBatches: number;
+  createdAt: string;
+  completedAt?: string;
+}
+
+/** 错误详情（含完整上下文，用于失败节点点击弹窗） */
+export interface ErrorDetail {
+  id: string;
+  batchIndex: number;
+  rowNumber: number;
+  fieldName: string;
+  rawValueMasked: string;
+  rawValue: string;
+  errorCode: string;
+  errorName: string;
+  errorReason: string;
+  suggestedFix: string;
+  traceId: string;
+  unitId: string;
+  taskId: string;
+  /** 所属解析规则名称 */
+  ruleName?: string;
+  /** 各阶段耗时（ms） */
+  stageDurations?: {
+    parseMs: number;
+    ruleMs: number;
+    validateMs: number;
+    insertMs: number;
+    totalMs: number;
+  };
+  /** 是否已重试 */
+  retried: boolean;
+  retryCount: number;
+  createdAt: string;
 }

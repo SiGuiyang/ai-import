@@ -71,6 +71,7 @@ src/
 │   ├── types.ts                   # TypeScript 类型定义
 │   ├── trace.ts                   # traceId 生成 + 时间线日志
 │   ├── import-worker.ts           # Worker 批处理引擎
+│   ├── redis.ts                   # Upstash Redis（重试/状态/失败快照）
 │   ├── auth.ts                    # 开放接口鉴权
 │   └── validators.ts              # 数据校验
 └── scripts/
