@@ -15,8 +15,20 @@ export function parseExcel(buffer: ArrayBuffer | Buffer): SheetData[] {
     const range = XLSX.utils.decode_range(ref);
     const rows: string[][] = [];
     let maxCols = 0;
+
+    // 补齐 range.s.r 之前的空行，确保 rows[r] 始终对应 Excel 第 r 行（0-based）
+    for (let r = 0; r < range.s.r; r++) {
+      rows.push([]);
+    }
+
     for (let r = range.s.r; r <= range.e.r; r++) {
       const row: string[] = [];
+
+      // 补齐 range.s.c 之前的空单元格，确保 row[c] 对应 Excel 第 c 列（0-based）
+      for (let c = 0; c < range.s.c; c++) {
+        row.push('');
+      }
+
       for (let c = range.s.c; c <= range.e.c; c++) {
         const addr = XLSX.utils.encode_cell({ r, c });
         const cell = sheet[addr];
