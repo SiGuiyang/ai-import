@@ -293,6 +293,31 @@ export async function initDB() {
     try { await sql`ALTER TABLE import_tasks ADD COLUMN IF NOT EXISTS degraded_sku_rows INTEGER DEFAULT 0`; } catch {}
     try { await sql`ALTER TABLE import_task_batches ADD COLUMN IF NOT EXISTS sku_validated BOOLEAN DEFAULT true`; } catch {}
 
+    // 模块四/五集成迁移：运单状态 + 扩展字段
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'pending'`; } catch {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS temperature_layer TEXT`; } catch {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS weight NUMERIC`; } catch {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS pieces INTEGER`; } catch {}
+    try { await sql`ALTER TABLE orders ADD COLUMN IF NOT EXISTS amount NUMERIC`; } catch {}
+    try { await sql`CREATE INDEX IF NOT EXISTS idx_orders_status ON orders(status)`; } catch {}
+
+    // 凭证管理表（补充：如果 app_credentials 不存在则创建）
+    try {
+      await sql`
+        CREATE TABLE IF NOT EXISTS app_credentials (
+          app_id TEXT PRIMARY KEY,
+          app_secret TEXT NOT NULL,
+          app_name TEXT,
+          active BOOLEAN DEFAULT true,
+          created_at TIMESTAMP DEFAULT NOW(),
+          updated_at TIMESTAMP DEFAULT NOW()
+        )
+      `;
+    } catch {}
+
+    // 链路事件表新增 duration 字段
+    try { await sql`ALTER TABLE trace_events ADD COLUMN IF NOT EXISTS duration_ms INTEGER DEFAULT 0`; } catch {}
+
   } catch (e) {
     console.warn('DB init failed, using in-memory fallback:', e);
   }

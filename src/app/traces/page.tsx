@@ -1,268 +1,130 @@
 'use client';
 
-/**
- * 模块九：全链路 Trace 检索页
- *
- * 支持按以下条件搜索：
- * - taskId
- * - 文件名（模糊匹配）
- * - 批次号
- * - 行号范围
- * - 错误码
- *
- * 搜索结果展示匹配的 Trace 列表，点击跳转到时间线详情。
- */
-
-import { useState, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import {
-  Card, Table, Tag, Button, Row, Col, Input, Select, Space, Typography, Divider,
-} from 'antd';
-import {
-  SearchOutlined, ReloadOutlined, ArrowLeftOutlined,
-  FileTextOutlined, BugOutlined, DashboardOutlined,
-} from '@ant-design/icons';
-import { ERROR_CODES } from '@/lib/types';
+import { Card, Table, Tag, Typography, Input, Button, Space, Empty } from 'antd';
+import { SearchOutlined, ReloadOutlined, InboxOutlined, NodeIndexOutlined } from '@ant-design/icons';
 
-const { Text } = Typography;
+const { Title, Text } = Typography;
 
-export default function TraceSearchPage() {
+interface TraceRecord {
+  traceId: string;
+  taskId: string;
+  eventName: string;
+  eventStatus: string;
+  durationMs: number;
+  createdAt: string;
+}
+
+export default function TracesPage() {
   const router = useRouter();
+  const [traces, setTraces] = useState<TraceRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
 
-  const [taskId, setTaskId] = useState('');
-  const [fileName, setFileName] = useState('');
-  const [batchIndex, setBatchIndex] = useState('');
-  const [rowFrom, setRowFrom] = useState('');
-  const [rowTo, setRowTo] = useState('');
-  const [errorCode, setErrorCode] = useState('');
-
-  const [results, setResults] = useState<any[]>([]);
-  const [total, setTotal] = useState(0);
-  const [loading, setLoading] = useState(false);
-  const [page, setPage] = useState(1);
-  const pageSize = 20;
-
-  const handleSearch = useCallback(async (p = 1) => {
+  const fetchTraces = async () => {
     setLoading(true);
-    setPage(p);
     try {
       const params = new URLSearchParams();
-      if (taskId.trim()) params.set('taskId', taskId.trim());
-      if (fileName.trim()) params.set('fileName', fileName.trim());
-      if (batchIndex.trim()) params.set('batchIndex', batchIndex.trim());
-      if (rowFrom.trim()) params.set('rowFrom', rowFrom.trim());
-      if (rowTo.trim()) params.set('rowTo', rowTo.trim());
-      if (errorCode) params.set('errorCode', errorCode);
-      params.set('page', String(p));
-      params.set('pageSize', String(pageSize));
-
-      const res = await fetch(`/api/traces/search?${params.toString()}`);
+      if (searchText) params.set('search', searchText);
+      const res = await fetch(`/api/traces?${params.toString()}`);
       const json = await res.json();
       if (json.code === 0) {
-        setResults(json.data.items || []);
-        setTotal(json.data.total || 0);
+        setTraces(json.data || []);
+      } else {
+        // Fallback: show empty state
+        setTraces([]);
       }
     } catch {
-      // ignore
-    } finally {
-      setLoading(false);
+      setTraces([]);
     }
-  }, [taskId, fileName, batchIndex, rowFrom, rowTo, errorCode]);
-
-  const handleReset = () => {
-    setTaskId('');
-    setFileName('');
-    setBatchIndex('');
-    setRowFrom('');
-    setRowTo('');
-    setErrorCode('');
-    setResults([]);
-    setTotal(0);
+    setLoading(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') handleSearch(1);
-  };
+  useEffect(() => { fetchTraces(); }, []);
 
   const columns = [
     {
-      title: '文件名', dataIndex: 'fileName', ellipsis: true, width: 200,
-      render: (v: string, r: any) => (
-        <a onClick={() => router.push(`/traces/${r.traceId}`)}>
-          <FileTextOutlined style={{ marginRight: 4 }} />{v}
+      title: 'Trace ID', dataIndex: 'traceId', width: 160, ellipsis: true,
+      render: (v: string) => (
+        <a onClick={() => router.push(`/traces/${v}`)}>
+          <Text code style={{ cursor: 'pointer', fontSize: 11 }}>{v.slice(0, 20)}...</Text>
         </a>
       ),
     },
     {
-      title: '任务ID', dataIndex: 'taskId', width: 150, ellipsis: true,
-      render: (v: string) => <Text code style={{ fontSize: 11 }}>{v.slice(0, 18)}...</Text>,
+      title: '任务ID', dataIndex: 'taskId', width: 160, ellipsis: true,
+      render: (v: string) => v ? (
+        <a onClick={() => router.push(`/import-tasks/${v}`)}>
+          <Text code style={{ cursor: 'pointer', fontSize: 11 }}>{v.slice(0, 12)}...</Text>
+        </a>
+      ) : '-',
     },
     {
-      title: 'Trace ID', dataIndex: 'traceId', width: 160, ellipsis: true,
-      render: (v: string) => <Text code style={{ fontSize: 11 }}>{v.slice(0, 18)}...</Text>,
+      title: '事件', dataIndex: 'eventName', width: 180,
+      render: (v: string) => <Text strong>{v}</Text>,
     },
     {
-      title: '状态', dataIndex: 'status', width: 90,
+      title: '状态', dataIndex: 'eventStatus', width: 90,
       render: (v: string) => {
         const m: Record<string, { color: string; text: string }> = {
-          PENDING: { color: 'default', text: '等待' },
-          PROCESSING: { color: 'processing', text: '处理中' },
+          STARTED: { color: 'processing', text: '开始' },
           COMPLETED: { color: 'success', text: '完成' },
-          PARTIAL_SUCCESS: { color: 'warning', text: '部分成功' },
           FAILED: { color: 'error', text: '失败' },
         };
         const info = m[v] || { color: 'default', text: v };
         return <Tag color={info.color}>{info.text}</Tag>;
       },
     },
-    { title: '总行', dataIndex: 'totalRows', width: 60 },
     {
-      title: '成功/失败', width: 100,
-      render: (_: any, r: any) => (
-        <span>
-          <Text style={{ color: '#52c41a' }}>{r.successRows}</Text>
-          {' / '}
-          <Text style={{ color: r.failedRows > 0 ? '#ff4d4f' : '#999' }}>{r.failedRows}</Text>
-        </span>
-      ),
+      title: '耗时', dataIndex: 'durationMs', width: 80,
+      render: (v: number) => v > 0 ? `${v}ms` : '-',
     },
     {
-      title: '错误', dataIndex: 'errorCount', width: 60,
-      render: (v: number) => v > 0 ? <Tag color="red">{v}</Tag> : <Text type="secondary">0</Text>,
-    },
-    {
-      title: '批次', dataIndex: 'totalBatches', width: 60,
-    },
-    {
-      title: '时间', dataIndex: 'createdAt', width: 130,
+      title: '时间', dataIndex: 'createdAt', width: 160,
       render: (v: string) => v ? new Date(v).toLocaleString() : '-',
-    },
-    {
-      title: '操作', width: 80,
-      render: (_: any, r: any) => (
-        <Button type="link" size="small" onClick={() => router.push(`/traces/${r.traceId}`)}>
-          查看链路
-        </Button>
-      ),
     },
   ];
 
   return (
-    <div style={{ padding: 24, maxWidth: 1600, margin: '0 auto' }}>
-      {/* 导航 */}
-      <Row gutter={16} style={{ marginBottom: 16 }} align="middle">
-        <Col>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/monitor')}>返回监控</Button>
-        </Col>
-        <Col>
-          <DashboardOutlined style={{ color: '#1677ff' }} />
-          <Text strong style={{ fontSize: 18, marginLeft: 8 }}>全链路 Trace 检索</Text>
-        </Col>
-      </Row>
-
-      {/* 搜索条件 */}
-      <Card size="small" style={{ marginBottom: 16 }}>
-        <Row gutter={[12, 12]}>
-          <Col span={6}>
-            <Input
-              placeholder="Task ID"
-              value={taskId}
-              onChange={(e) => setTaskId(e.target.value)}
-              onKeyDown={handleKeyDown}
-              allowClear
-              prefix={<FileTextOutlined />}
-            />
-          </Col>
-          <Col span={6}>
-            <Input
-              placeholder="文件名（模糊搜索）"
-              value={fileName}
-              onChange={(e) => setFileName(e.target.value)}
-              onKeyDown={handleKeyDown}
-              allowClear
-            />
-          </Col>
-          <Col span={4}>
-            <Input
-              placeholder="批次号"
-              value={batchIndex}
-              onChange={(e) => setBatchIndex(e.target.value)}
-              onKeyDown={handleKeyDown}
-              allowClear
-              type="number"
-            />
-          </Col>
-          <Col span={4}>
-            <Space>
-              <Input
-                placeholder="行号起"
-                value={rowFrom}
-                onChange={(e) => setRowFrom(e.target.value)}
-                onKeyDown={handleKeyDown}
-                style={{ width: 80 }}
-                type="number"
-              />
-              <Text type="secondary">~</Text>
-              <Input
-                placeholder="行号止"
-                value={rowTo}
-                onChange={(e) => setRowTo(e.target.value)}
-                onKeyDown={handleKeyDown}
-                style={{ width: 80 }}
-                type="number"
-              />
-            </Space>
-          </Col>
-          <Col span={4}>
-            <Select
-              placeholder="错误码"
-              value={errorCode || undefined}
-              onChange={(v) => setErrorCode(v || '')}
-              allowClear
-              style={{ width: '100%' }}
-              options={Object.entries(ERROR_CODES).map(([k, v]) => ({ label: `${k} ${v}`, value: k }))}
-            />
-          </Col>
-        </Row>
-        <Divider style={{ margin: '12px 0' }} />
-        <Row justify="end">
+    <div style={{ minHeight: '100vh', background: '#f7f8fa' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '24px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <Title level={4} style={{ margin: 0 }}>
+              <NodeIndexOutlined style={{ marginRight: 8, color: '#0fc6c2' }} />
+              全链路 Trace
+            </Title>
+            <Text type="secondary">查看导入流程的全链路追踪记录</Text>
+          </div>
           <Space>
-            <Button onClick={handleReset} icon={<ReloadOutlined />}>重置</Button>
-            <Button type="primary" onClick={() => handleSearch(1)} icon={<SearchOutlined />} loading={loading}>
-              搜索
-            </Button>
+            <Button icon={<InboxOutlined />} onClick={() => router.push('/')}>返回导入</Button>
+            <Button icon={<ReloadOutlined />} onClick={fetchTraces} loading={loading}>刷新</Button>
           </Space>
-        </Row>
-      </Card>
+        </div>
 
-      {/* 搜索结果 */}
-      <Card
-        size="small"
-        title={
-          <Space>
-            <BugOutlined />
-            <span>搜索结果 {total > 0 ? <Text type="secondary">（共 {total} 条）</Text> : ''}</span>
+        <Card>
+          <Space style={{ marginBottom: 16 }}>
+            <Input.Search
+              placeholder="搜索 Trace ID 或任务 ID"
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              onSearch={fetchTraces}
+              style={{ width: 320 }}
+              enterButton={<SearchOutlined />}
+            />
           </Space>
-        }
-      >
-        <Table
-          columns={columns}
-          dataSource={results}
-          rowKey="traceId"
-          loading={loading}
-          size="small"
-          pagination={{
-            current: page,
-            pageSize,
-            total,
-            showTotal: (t) => `共 ${t} 条`,
-            onChange: (p) => handleSearch(p),
-            showSizeChanger: false,
-          }}
-          locale={{ emptyText: '请在上方输入条件后点击搜索' }}
-          scroll={{ x: 1100 }}
-        />
-      </Card>
+
+          <Table
+            columns={columns}
+            dataSource={traces}
+            rowKey="traceId"
+            loading={loading}
+            pagination={{ pageSize: 20, showTotal: t => `共 ${t} 条` }}
+            locale={{ emptyText: <Empty description="暂无 Trace 记录" image={Empty.PRESENTED_IMAGE_SIMPLE} /> }}
+          />
+        </Card>
+      </div>
     </div>
   );
 }

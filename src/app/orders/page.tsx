@@ -1,191 +1,156 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Card, Table, Input, DatePicker, Typography, Space, Button, Pagination, message, Empty } from 'antd';
-import { ArrowLeftOutlined, SearchOutlined } from '@ant-design/icons';
 import { useRouter } from 'next/navigation';
-import type { Dayjs } from 'dayjs';
-const { RangePicker } = DatePicker;
-const { Title, Text } = Typography;
+import { Card, Table, Tag, Button, Space, Typography, Input, Select, Statistic, Row, Col } from 'antd';
+import { PlusOutlined, SearchOutlined, ReloadOutlined, InboxOutlined, ExportOutlined } from '@ant-design/icons';
 
-interface Order {
+const { Title } = Typography;
+
+interface OrderRecord {
   id: string;
   externalCode: string;
+  skuCode: string;
+  skuName: string;
+  skuQuantity: number;
   receiverStore: string;
   receiverName: string;
   receiverPhone: string;
   receiverAddress: string;
-  skuCode: string;
-  skuName: string;
-  skuQuantity: number;
-  skuSpec: string;
-  remark: string;
+  status: string;
   batchId: string;
+  importTaskId: string;
   createdAt: string;
 }
 
 export default function OrdersPage() {
   const router = useRouter();
-  const [orders, setOrders] = useState<Order[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(1);
+  const [orders, setOrders] = useState<OrderRecord[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [searchText, setSearchText] = useState('');
+  const [statusFilter, setStatusFilter] = useState<string>('');
   const [total, setTotal] = useState(0);
-  const [pageSize] = useState(20);
-  const [dateRange, setDateRange] = useState<[Dayjs, Dayjs] | null>(null);
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 20 });
 
   const fetchOrders = async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        search,
-        page: String(page),
-        pageSize: String(pageSize),
+        page: String(pagination.page),
+        pageSize: String(pagination.pageSize),
       });
-      if (dateRange && dateRange[0] && dateRange[1]) {
-        params.set('startDate', dateRange[0].format('YYYY-MM-DD'));
-        params.set('endDate', dateRange[1].format('YYYY-MM-DD'));
+      if (statusFilter) params.set('status', statusFilter);
+      if (searchText) params.set('search', searchText);
+
+      const res = await fetch(`/api/orders?${params.toString()}`);
+      const json = await res.json();
+      if (json.code === 0) {
+        setOrders(json.data.list || []);
+        setTotal(json.data.total || 0);
       }
-      const res = await fetch(`/api/orders?${params}`);
-      const data = await res.json();
-      setOrders(data.data || []);
-      setTotal(data.total || 0);
-    } catch (e) {
-      message.error('加载运单列表失败');
-    } finally {
-      setLoading(false);
-    }
+    } catch { /* ignore */ }
+    setLoading(false);
   };
 
-  useEffect(() => {
-    fetchOrders();
-  }, [page, search, dateRange]);
-
-  const handleSearch = (val: string) => {
-    setSearch(val);
-    setPage(1);
-  };
-
-  const handleDateChange = (dates: any) => {
-    setDateRange(dates);
-    setPage(1);
-  };
+  useEffect(() => { fetchOrders(); }, [pagination.page, statusFilter]);
 
   const columns = [
+    { title: '#', width: 30, render: (_: any, __: any, i: number) => (pagination.page - 1) * pagination.pageSize + i + 1 },
+    { title: '外部编码', dataIndex: 'externalCode', width: 120, ellipsis: true },
+    { title: 'SKU编码', dataIndex: 'skuCode', width: 100, ellipsis: true },
+    { title: 'SKU名称', dataIndex: 'skuName', width: 150, ellipsis: true },
+    { title: '数量', dataIndex: 'skuQuantity', width: 70 },
+    { title: '收货门店', dataIndex: 'receiverStore', width: 120, ellipsis: true },
+    { title: '收件人', dataIndex: 'receiverName', width: 90, ellipsis: true },
+    { title: '电话', dataIndex: 'receiverPhone', width: 120 },
+    { title: '地址', dataIndex: 'receiverAddress', width: 180, ellipsis: true },
     {
-      title: '外部编码',
-      dataIndex: 'external_code',
-      key: 'external_code',
-      width: 130,
-      render: (val: string) => val || '-',
+      title: '状态', dataIndex: 'status', width: 80,
+      render: (v: string) => {
+        const m: Record<string, { color: string; text: string }> = {
+          pending: { color: 'processing', text: '待处理' },
+          confirmed: { color: 'success', text: '已确认' },
+          failed: { color: 'error', text: '失败' },
+        };
+        const info = m[v] || { color: 'default', text: v };
+        return <Tag color={info.color}>{info.text}</Tag>;
+      },
     },
     {
-      title: '收货门店',
-      dataIndex: 'receiver_store',
-      key: 'receiver_store',
-      width: 140,
-      render: (val: string) => val || '-',
+      title: '导入任务', dataIndex: 'importTaskId', width: 130, ellipsis: true,
+      render: (v: string) => v ? (
+        <a onClick={() => router.push(`/import-tasks/${v}`)}>
+          <Tag color="blue" style={{ cursor: 'pointer' }}>{v.slice(0, 12)}...</Tag>
+        </a>
+      ) : '-',
     },
     {
-      title: '收件人',
-      dataIndex: 'receiver_name',
-      key: 'receiver_name',
-      width: 100,
-      render: (val: string) => val || '-',
-    },
-    {
-      title: '电话',
-      dataIndex: 'receiver_phone',
-      key: 'receiver_phone',
-      width: 130,
-      render: (val: string) => val || '-',
-    },
-    {
-      title: '地址',
-      dataIndex: 'receiver_address',
-      key: 'receiver_address',
-      ellipsis: true,
-      width: 200,
-      render: (val: string) => val || '-',
-    },
-    {
-      title: 'SKU编码',
-      dataIndex: 'sku_code',
-      key: 'sku_code',
-      width: 120,
-    },
-    {
-      title: 'SKU名称',
-      dataIndex: 'sku_name',
-      key: 'sku_name',
-      width: 160,
-    },
-    {
-      title: '数量',
-      dataIndex: 'sku_quantity',
-      key: 'sku_quantity',
-      width: 80,
-      align: 'right' as const,
-    },
-    {
-      title: '规格',
-      dataIndex: 'sku_spec',
-      key: 'sku_spec',
-      width: 120,
-      render: (val: string) => val || '-',
-    },
-    {
-      title: '提交时间',
-      dataIndex: 'created_at',
-      key: 'created_at',
-      width: 170,
-      sorter: true,
-      render: (val: string) => val ? new Date(val).toLocaleString('zh-CN') : '-',
+      title: '创建时间', dataIndex: 'createdAt', width: 160,
+      render: (v: string) => v ? new Date(v).toLocaleString() : '-',
     },
   ];
 
+  const successCount = orders.filter(o => o.status === 'confirmed').length;
+  const pendingCount = orders.filter(o => o.status === 'pending').length;
+  const failCount = orders.filter(o => o.status === 'failed').length;
+
   return (
-    <div style={{ minHeight: '100vh', background: '#f7f8fa', padding: '24px 16px' }}>
-      <div style={{ maxWidth: 1400, margin: '0 auto' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 24, flexWrap: 'wrap' }}>
-          <Button icon={<ArrowLeftOutlined />} onClick={() => router.push('/')}>返回</Button>
-          <Title level={4} style={{ margin: 0 }}>已导入运单</Title>
-          <div style={{ flex: 1 }} />
-          <Space wrap>
-            <RangePicker
-              onChange={handleDateChange}
-              style={{ width: 280 }}
-              placeholder={['开始日期', '结束日期']}
-              allowClear
-            />
-            <Input.Search
-              placeholder="搜索外部编码/收件人/SKU"
-              onSearch={handleSearch}
-              onChange={e => { if (!e.target.value) { setSearch(''); setPage(1); fetchOrders(); } }}
-              style={{ width: 280 }}
-              allowClear
-            />
+    <div style={{ minHeight: '100vh', background: '#f7f8fa' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <Title level={4} style={{ margin: 0 }}>已导入运单</Title>
+            <Typography.Text type="secondary">查看通过万能导入系统生成的运单数据</Typography.Text>
+          </div>
+          <Space>
+            <Button icon={<InboxOutlined />} onClick={() => router.push('/')}>返回导入</Button>
+            <Button icon={<ReloadOutlined />} onClick={fetchOrders}>刷新</Button>
           </Space>
         </div>
 
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col span={6}><Card size="small"><Statistic title="总运单" value={total} suffix="条" /></Card></Col>
+          <Col span={6}><Card size="small"><Statistic title="已确认" value={successCount} suffix="条" valueStyle={{ color: '#52c41a' }} /></Card></Col>
+          <Col span={6}><Card size="small"><Statistic title="待处理" value={pendingCount} suffix="条" valueStyle={{ color: '#1677ff' }} /></Card></Col>
+          <Col span={6}><Card size="small"><Statistic title="失败" value={failCount} suffix="条" valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
+        </Row>
+
         <Card>
+          <Space style={{ marginBottom: 16 }}>
+            <Input.Search
+              placeholder="搜索外部编码 / SKU / 门店"
+              value={searchText}
+              onChange={e => setSearchText(e.target.value)}
+              onSearch={fetchOrders}
+              style={{ width: 300 }}
+              enterButton={<SearchOutlined />}
+            />
+            <Select
+              placeholder="状态筛选"
+              allowClear
+              value={statusFilter || undefined}
+              onChange={setStatusFilter}
+              style={{ width: 120 }}
+              options={[
+                { label: '待处理', value: 'pending' },
+                { label: '已确认', value: 'confirmed' },
+                { label: '失败', value: 'failed' },
+              ]}
+            />
+          </Space>
+
           <Table
-            dataSource={orders}
             columns={columns}
+            dataSource={orders}
             rowKey="id"
             loading={loading}
+            scroll={{ x: 1300 }}
             pagination={{
-              current: page,
+              current: pagination.page,
+              pageSize: pagination.pageSize,
               total,
-              pageSize,
-              onChange: setPage,
-              showTotal: (t) => `共 ${t} 条`,
-              showSizeChanger: false,
-            }}
-            scroll={{ x: 1400 }}
-            size="small"
-            locale={{
-              emptyText: <Empty description="暂无运单数据" />,
+              showTotal: t => `共 ${t} 条`,
+              onChange: (page, pageSize) => setPagination({ page, pageSize }),
             }}
           />
         </Card>

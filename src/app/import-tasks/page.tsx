@@ -1,13 +1,30 @@
 'use client';
 
-/**
- * 导入任务列表页
- */
-
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { Table, Tag, Button, Card, Space, Select, Input, Upload, message } from 'antd';
-import { UploadOutlined, PlusOutlined } from '@ant-design/icons';
+import {
+  Card, Table, Tag, Button, Space, Typography, Select, Progress,
+  Row, Col, Statistic,
+} from 'antd';
+import { PlusOutlined, ReloadOutlined, SearchOutlined, SyncOutlined } from '@ant-design/icons';
+
+const { Title } = Typography;
+
+interface TaskRecord {
+  taskId: string;
+  fileName: string;
+  status: string;
+  totalRows: number;
+  processedRows: number;
+  successRows: number;
+  failedRows: number;
+  totalBatches: number;
+  completedBatches: number;
+  traceId: string;
+  degraded: boolean;
+  createdAt: string;
+  completedAt: string;
+}
 
 const STATUS_MAP: Record<string, { color: string; text: string }> = {
   PENDING: { color: 'default', text: '等待中' },
@@ -15,157 +32,154 @@ const STATUS_MAP: Record<string, { color: string; text: string }> = {
   COMPLETED: { color: 'success', text: '已完成' },
   PARTIAL_SUCCESS: { color: 'warning', text: '部分成功' },
   FAILED: { color: 'error', text: '失败' },
+  DUPLICATE: { color: 'purple', text: '重复任务' },
 };
 
 export default function ImportTasksPage() {
   const router = useRouter();
-  const [tasks, setTasks] = useState<any[]>([]);
+  const [tasks, setTasks] = useState<TaskRecord[]>([]);
   const [loading, setLoading] = useState(true);
-  const [statusFilter, setStatusFilter] = useState('');
-  const [uploading, setUploading] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [pagination, setPagination] = useState({ page: 1, pageSize: 20, total: 0 });
 
   const fetchTasks = async () => {
     setLoading(true);
     try {
-      const url = `/api/import-tasks${statusFilter ? `?status=${statusFilter}` : ''}`;
-      const res = await fetch(url);
-      const data = await res.json();
-      if (data.code === 0) setTasks(data.data || []);
-    } catch {
-      message.error('获取任务列表失败');
-    } finally {
-      setLoading(false);
-    }
+      const params = new URLSearchParams({
+        page: String(pagination.page),
+        pageSize: String(pagination.pageSize),
+      });
+      if (statusFilter) params.set('status', statusFilter);
+
+      const res = await fetch(`/api/import-tasks?${params.toString()}`);
+      const json = await res.json();
+      if (json.code === 0) {
+        setTasks(json.data || []);
+        setPagination(prev => ({ ...prev, total: json.data?.length || 0 }));
+      }
+    } catch { /* ignore */ }
+    setLoading(false);
   };
 
   useEffect(() => {
     fetchTasks();
-    // 每 3 秒自动刷新
-    const timer = setInterval(fetchTasks, 3000);
-    return () => clearInterval(timer);
-  }, [statusFilter]);
-
-  const handleUpload = async (file: File) => {
-    setUploading(true);
-    try {
-      const formData = new FormData();
-      formData.append('file', file);
-      // 使用默认规则
-      formData.append('rule', JSON.stringify({ id: 'default', fieldMapping: {} }));
-
-      const res = await fetch('/api/import-tasks', { method: 'POST', body: formData });
-      const data = await res.json();
-
-      if (data.taskId) {
-        message.success(`任务已创建: ${data.taskId}`);
-        router.push(`/import-tasks/${data.taskId}`);
-      } else {
-        message.error(data.message || '创建任务失败');
-      }
-    } catch {
-      message.error('上传失败');
-    } finally {
-      setUploading(false);
-    }
-    return false; // 阻止默认上传行为
-  };
+    const interval = setInterval(fetchTasks, 10000);
+    return () => clearInterval(interval);
+  }, [pagination.page, pagination.pageSize, statusFilter]);
 
   const columns = [
+    { title: '#', width: 40, render: (_: any, __: any, i: number) => (pagination.page - 1) * pagination.pageSize + i + 1 },
     {
-      title: '任务ID', dataIndex: 'taskId', width: 160,
+      title: '任务ID', dataIndex: 'taskId', width: 130, ellipsis: true,
       render: (v: string) => (
-        <a onClick={() => router.push(`/import-tasks/${v}`)} style={{ fontFamily: 'monospace', fontSize: 12 }}>
-          {v}
+        <a onClick={() => router.push(`/import-tasks/${v}`)}>
+          <Typography.Text code style={{ cursor: 'pointer' }}>{v.slice(0, 12)}...</Typography.Text>
         </a>
       ),
     },
-    { title: '文件名', dataIndex: 'fileName', ellipsis: true },
+    { title: '文件名', dataIndex: 'fileName', width: 200, ellipsis: true },
     {
-      title: '状态', dataIndex: 'status', width: 100,
+      title: '状态', dataIndex: 'status', width: 90,
       render: (v: string) => {
-        const info = STATUS_MAP[v] || { color: 'default', text: v };
-        return <Tag color={info.color}>{info.text}</Tag>;
+        const m = STATUS_MAP[v] || { color: 'default', text: v };
+        const icon = v === 'PROCESSING' ? <SyncOutlined spin style={{ marginRight: 4 }} /> : null;
+        return <Tag color={m.color}>{icon}{m.text}</Tag>;
       },
     },
-    { title: '总行数', dataIndex: 'totalRows', width: 80 },
-    { title: '已处理', dataIndex: 'processedRows', width: 80 },
+    {
+      title: '进度', width: 150,
+      render: (_: any, r: TaskRecord) => {
+        const percent = r.totalRows > 0 ? Math.round((r.processedRows / r.totalRows) * 100) : 0;
+        return (
+          <span>
+            <Progress percent={percent} size="small" style={{ width: 80, display: 'inline-block' }} />
+            <Typography.Text style={{ marginLeft: 8, fontSize: 12 }}>{r.processedRows}/{r.totalRows}</Typography.Text>
+          </span>
+        );
+      },
+    },
     {
       title: '成功/失败', width: 100,
-      render: (_: any, r: any) => (
-        <span>
-          <span style={{ color: '#52c41a' }}>{r.successRows}</span>
-          {' / '}
-          <span style={{ color: r.failedRows > 0 ? '#ff4d4f' : undefined }}>{r.failedRows}</span>
-        </span>
+      render: (_: any, r: TaskRecord) => (
+        <span><Typography.Text type="success">{r.successRows}</Typography.Text> / <Typography.Text type="danger">{r.failedRows}</Typography.Text></span>
       ),
     },
     {
-      title: '降级', dataIndex: 'degraded', width: 60,
-      render: (v: boolean) => v ? <Tag color="orange">降级</Tag> : '-',
+      title: '批次', width: 80,
+      render: (_: any, r: TaskRecord) => `${r.completedBatches}/${r.totalBatches}`,
+    },
+    {
+      title: '降级', dataIndex: 'degraded', width: 70,
+      render: (v: boolean) => v ? <Tag color="warning">已降级</Tag> : null,
+    },
+    {
+      title: 'Trace', dataIndex: 'traceId', width: 120, ellipsis: true,
+      render: (v: string) => (
+        <a onClick={() => router.push(`/traces/${v}`)}>
+          <Typography.Text code style={{ cursor: 'pointer', fontSize: 11 }}>{v.slice(0, 12)}...</Typography.Text>
+        </a>
+      ),
     },
     {
       title: '创建时间', dataIndex: 'createdAt', width: 160,
       render: (v: string) => v ? new Date(v).toLocaleString() : '-',
     },
-    {
-      title: '操作', width: 100,
-      render: (_: any, r: any) => (
-        <Space>
-          <Button type="link" size="small" onClick={() => router.push(`/import-tasks/${r.taskId}`)}>
-            查看
-          </Button>
-          <Button type="link" size="small" onClick={() => router.push(`/traces/${r.traceId}`)}>
-            Trace
-          </Button>
-        </Space>
-      ),
-    },
   ];
 
+  const processingCount = tasks.filter(t => t.status === 'PROCESSING').length;
+  const completedCount = tasks.filter(t => t.status === 'COMPLETED').length;
+  const failedCount = tasks.filter(t => t.status === 'FAILED').length;
+  const degradedCount = tasks.filter(t => t.degraded).length;
+
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: '0 auto' }}>
-      <Card
-        title="导入任务"
-        extra={
+    <div style={{ minHeight: '100vh', background: '#f7f8fa' }}>
+      <div style={{ maxWidth: 1400, margin: '0 auto', padding: '24px 16px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 24 }}>
+          <div>
+            <Title level={4} style={{ margin: 0 }}>导入任务</Title>
+            <Typography.Text type="secondary">管理所有异步导入任务，查看进度和结果</Typography.Text>
+          </div>
           <Space>
-            <Select
-              placeholder="筛选状态"
-              allowClear
-              style={{ width: 120 }}
-              value={statusFilter || undefined}
-              onChange={(v) => setStatusFilter(v || '')}
-              options={[
-                { label: '等待中', value: 'PENDING' },
-                { label: '处理中', value: 'PROCESSING' },
-                { label: '已完成', value: 'COMPLETED' },
-                { label: '部分成功', value: 'PARTIAL_SUCCESS' },
-                { label: '失败', value: 'FAILED' },
-              ]}
-            />
-            <Upload
-              beforeUpload={(file) => { handleUpload(file); return false; }}
-              showUploadList={false}
-              accept=".xlsx,.xls,.docx,.pdf"
-            >
-              <Button type="primary" icon={<UploadOutlined />} loading={uploading}>
-                上传文件
-              </Button>
-            </Upload>
-            <Button icon={<PlusOutlined />} onClick={() => router.push('/')}>
-              创建规则
-            </Button>
+            <Button icon={<PlusOutlined />} type="primary" onClick={() => router.push('/')}>新建导入</Button>
+            <Button icon={<ReloadOutlined />} onClick={fetchTasks}>刷新</Button>
           </Space>
-        }
-      >
-        <Table
-          columns={columns}
-          dataSource={tasks}
-          rowKey="taskId"
-          loading={loading}
-          size="small"
-          pagination={{ pageSize: 20, showTotal: (total) => `共 ${total} 条` }}
-        />
-      </Card>
+        </div>
+
+        <Row gutter={16} style={{ marginBottom: 16 }}>
+          <Col span={6}><Card size="small"><Statistic title="进行中" value={processingCount} suffix="个" valueStyle={{ color: '#1677ff' }} /></Card></Col>
+          <Col span={6}><Card size="small"><Statistic title="已完成" value={completedCount} suffix="个" valueStyle={{ color: '#52c41a' }} /></Card></Col>
+          <Col span={6}><Card size="small"><Statistic title="失败" value={failedCount} suffix="个" valueStyle={{ color: '#ff4d4f' }} /></Card></Col>
+          <Col span={6}><Card size="small"><Statistic title="已降级" value={degradedCount} suffix="个" valueStyle={{ color: '#faad14' }} /></Card></Col>
+        </Row>
+
+        <Card>
+          <Space style={{ marginBottom: 16 }}>
+            <Select
+              placeholder="状态筛选"
+              allowClear
+              value={statusFilter || undefined}
+              onChange={setStatusFilter}
+              style={{ width: 150 }}
+              options={Object.entries(STATUS_MAP).map(([k, v]) => ({ label: v.text, value: k }))}
+            />
+          </Space>
+
+          <Table
+            columns={columns}
+            dataSource={tasks}
+            rowKey="taskId"
+            loading={loading}
+            scroll={{ x: 1200 }}
+            pagination={{
+              current: pagination.page,
+              pageSize: pagination.pageSize,
+              total: pagination.total,
+              showTotal: t => `共 ${t} 个任务`,
+              onChange: (page, pageSize) => setPagination({ ...pagination, page, pageSize }),
+            }}
+          />
+        </Card>
+      </div>
     </div>
   );
 }

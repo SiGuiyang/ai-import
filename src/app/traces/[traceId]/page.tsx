@@ -10,10 +10,10 @@
  * - 批次性能表格
  */
 
-import { useState, useEffect, useCallback } from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect, useCallback, use } from 'react';
+import { useRouter } from 'next/navigation';
 import {
-  Card, Table, Tag, Button, Space, Spin, Timeline, Descriptions, Input, Select, Row, Col,
+  Card, Table, Tag, Button, Space, Spin, Descriptions, Input, Select, Row, Col,
   Modal, Typography, Tooltip, Segmented,
 } from 'antd';
 import {
@@ -31,10 +31,9 @@ const STATUS_COLOR_MAP: Record<string, string> = {
   FAILED: '#ff4d4f',
 };
 
-export default function TraceDetailPage() {
-  const params = useParams();
+export default function TraceDetailPage({ params }: { params: Promise<{ traceId: string }> }) {
+  const { traceId } = use(params);
   const router = useRouter();
-  const traceId = params.traceId as string;
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -338,25 +337,22 @@ export default function TraceDetailPage() {
             style={{ marginBottom: 16 }}
           >
             {viewMode === 'timeline' ? (
-              <Timeline
-                items={timelineWithContext.map((e: any) => ({
-                  color: STATUS_COLOR_MAP[e.eventStatus] || '#999',
-                  dot: e.isFailed ? <CloseCircleOutlined style={{ fontSize: 16 }} /> : undefined,
-                  children: (
+              <div style={{ padding: '0 8px' }}>
+                {timelineWithContext.map((e: any, idx: number) => (
+                  <div key={idx} style={{
+                    display: 'flex', padding: '12px 0', borderBottom: '1px solid #f0f0f0',
+                    borderLeft: e.isFailed ? '3px solid #ff4d4f' : `3px solid ${STATUS_COLOR_MAP[e.eventStatus] || '#d9d9d9'}`,
+                    paddingLeft: 12, marginLeft: 6,
+                  }}>
                     <div
+                      onClick={() => { if (e.batchErrors.length > 0) handleErrorClick(e.batchErrors[0]); }}
                       style={{
                         cursor: e.hasError || e.isFailed ? 'pointer' : 'default',
-                        padding: '4px 8px',
-                        borderRadius: 6,
+                        padding: '4px 8px', borderRadius: 6,
                         background: e.isFailed ? '#fff2f0' : e.hasError ? '#fffbe6' : 'transparent',
                         border: e.isFailed ? '1px solid #ffccc7' : e.hasError ? '1px solid #ffe58f' : '1px solid transparent',
-                      }}
-                      onClick={() => {
-                        if (e.batchErrors.length > 0) {
-                          handleErrorClick(e.batchErrors[0]);
-                        }
-                      }}
-                    >
+                        flex: 1,
+                      }}>
                       <div style={{ fontWeight: 500, fontSize: 13 }}>
                         {e.eventName}
                         {e.batch && (
@@ -379,9 +375,9 @@ export default function TraceDetailPage() {
                         </div>
                       )}
                     </div>
-                  ),
-                }))}
-              />
+                  </div>
+                ))}
+              </div>
             ) : (
               /* 按批次视图 */
               <div>
@@ -394,7 +390,7 @@ export default function TraceDetailPage() {
                       key={b.batchIndex}
                       size="small"
                       style={{ marginBottom: 8 }}
-                      type={batchErrors.length > 0 ? undefined : 'default'}
+                      type={batchErrors.length > 0 ? undefined : 'inner'}
                       styles={batchErrors.length > 0 ? { body: { borderLeft: '3px solid #faad14' } } : {}}
                     >
                       <Row justify="space-between" align="middle">
