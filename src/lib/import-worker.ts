@@ -64,8 +64,9 @@ export async function processBatchJob(payload: {
   fileUrl: string;
   rule: Record<string, unknown>;
   traceId: string;
+  importMode?: 'rule-engine' | 'ai-direct';
 }): Promise<void> {
-  const { taskId, unitId, batchIndex, startRow, endRow, rule, traceId } = payload;
+  const { taskId, unitId, batchIndex, startRow, endRow, rule, traceId, importMode } = payload;
   const totalStart = Date.now();
 
   // --- 幂等检查（DB 层，模块五新增）：已完成直接快速返回 ---
@@ -108,23 +109,50 @@ export async function processBatchJob(payload: {
   let failCount = 0;
 
   try {
-    // --- Step 1: 读取原始数据 ---
-    const t0 = Date.now();
-    rawRows = await readRawRows(taskId, startRow, endRow);
-    timings.parseMs = Date.now() - t0;
+    const isAiDirect = importMode === 'ai-direct';
 
-    if (rawRows.length === 0) {
-      // 空批次：CAS 标记成功，不更新进度
-      await completeBatchCAS(taskId, unitId, 'SUCCEEDED');
-      await recordPerformanceLog(taskId, unitId, batchIndex, timings, 0, 0, 0, 'SUCCEEDED', traceId);
-      await checkAndCompleteTask(taskId, traceId);
-      return;
+    if (isAiDirect) {
+      // --- AI Direct 模式：读取已结构化的数据，直接映射为目标格式 ---
+      const t0 = Date.now();
+      rawRows = await readRawRows(taskId, startRow, endRow);
+      timings.parseMs = Date.now() - t0;
+
+      // AI 已解析为 targetField → 直接转为 MappedRow
+      mappedRows = rawRows.map((r) => ({
+        rowIndex: r.rowIndex,
+        data: r.data as Record<string, unknown>,
+        mapped: { ...r.data } as Record<string, unknown>,
+        error: undefined,
+      }));
+      timings.ruleMs = 0;
+
+      await logTraceEvent({
+        traceId, taskId,
+        eventName: 'AiDirectProcess',
+        unitId,
+        eventStatus: 'STARTED',
+        message: `AI 直接处理批次 ${batchIndex} (${startRow}-${endRow}), ${rawRows.length} 行`,
+      });
+    } else {
+      // --- 规则引擎模式：读取原始数据 + 应用规则 ---
+      // --- Step 1: 读取原始数据 ---
+      const t0 = Date.now();
+      rawRows = await readRawRows(taskId, startRow, endRow);
+      timings.parseMs = Date.now() - t0;
+
+      if (rawRows.length === 0) {
+        // 空批次：CAS 标记成功，不更新进度
+        await completeBatchCAS(taskId, unitId, 'SUCCEEDED');
+        await recordPerformanceLog(taskId, unitId, batchIndex, timings, 0, 0, 0, 'SUCCEEDED', traceId);
+        await checkAndCompleteTask(taskId, traceId);
+        return;
+      }
+
+      // --- Step 2: 规则映射 ---
+      const t1 = Date.now();
+      mappedRows = await applyRules(rawRows, rule as unknown as ParseRule);
+      timings.ruleMs = Date.now() - t1;
     }
-
-    // --- Step 2: 规则映射 ---
-    const t1 = Date.now();
-    mappedRows = await applyRules(rawRows, rule as unknown as ParseRule);
-    timings.ruleMs = Date.now() - t1;
 
     // --- Step 3: SKU 主数据校验（模块十：3秒超时 + 降级处理）---
     let skuErrors: ValidationError[] = [];

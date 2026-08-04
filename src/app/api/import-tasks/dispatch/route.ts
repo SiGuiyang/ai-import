@@ -148,6 +148,7 @@ export async function POST(req: NextRequest) {
           fileUrl: payload.fileUrl,
           rule: payload.rule,
           traceId: payload.traceId,
+          importMode: payload.importMode || 'rule-engine',
         });
 
         // 2d. Worker 成功 → Outbox 标记 SUCCEEDED
