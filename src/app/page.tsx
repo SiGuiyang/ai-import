@@ -584,6 +584,9 @@ export default function HomePage() {
           <Button type="link" onClick={() => router.push('/monitor')}>
             监控看板
           </Button>
+          <Button type="link" onClick={() => router.push('/traces')}>
+            全链路 Trace
+          </Button>
         </div>
 
         <Card style={{ marginBottom: 24 }}>
