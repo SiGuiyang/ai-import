@@ -224,7 +224,7 @@ export async function initializeDatabase() {
 
     for (const query of MIGRATION_SQLS) {
       try {
-        await sql(query);
+        await sql.unsafe(query);
       } catch (err: any) {
         // 依赖枚举类型的表可能因枚举未就绪而失败，记录后继续
         console.warn(`[DB Init] Statement warning: ${err.message}`);

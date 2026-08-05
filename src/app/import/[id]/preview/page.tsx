@@ -66,11 +66,6 @@ export default function DataPreviewPage() {
   const [submitResult, setSubmitResult] = useState<any>(null);
   const [exporting, setExporting] = useState(false);
 
-  // 加载数据
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
-
   const fetchData = useCallback(async () => {
     setLoading(true);
     try {
@@ -86,6 +81,11 @@ export default function DataPreviewPage() {
       setLoading(false);
     }
   }, [importId]);
+
+  // 加载数据
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
 
   // 执行校验
   const handleValidate = useCallback(async () => {
