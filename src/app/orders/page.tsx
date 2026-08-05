@@ -12,7 +12,7 @@ import {
   Descriptions,
   message,
 } from "antd";
-import { SearchOutlined, EyeOutlined } from "@ant-design/icons";
+import { SearchOutlined, EyeOutlined, SendOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 
 const { Title } = Typography;
@@ -144,6 +144,31 @@ export default function OrdersPage() {
     }
   };
 
+  const handleSubmit = (record: Order) => {
+    Modal.confirm({
+      title: "确认提交",
+      content: `确定要提交运单「${record.externalCode || record.id}」吗？提交后状态将变为已提交。`,
+      okText: "提交",
+      cancelText: "取消",
+      onOk: async () => {
+        try {
+          const res = await fetch(`/api/orders/${record.id}`, {
+            method: "PATCH",
+          });
+          const data = await res.json();
+          if (data.success) {
+            message.success("提交成功");
+            fetchOrders(pagination.page);
+          } else {
+            message.error(data.error || "提交失败");
+          }
+        } catch {
+          message.error("提交失败，请重试");
+        }
+      },
+    });
+  };
+
   const columns = [
     {
       title: "外部编码",
@@ -203,16 +228,28 @@ export default function OrdersPage() {
     {
       title: "操作",
       key: "actions",
-      width: 80,
+      width: 160,
       render: (_: any, record: Order) => (
-        <Button
-          type="link"
-          size="small"
-          icon={<EyeOutlined />}
-          onClick={() => handleViewDetail(record.id)}
-        >
-          详情
-        </Button>
+        <>
+          <Button
+            type="link"
+            size="small"
+            icon={<EyeOutlined />}
+            onClick={() => handleViewDetail(record.id)}
+          >
+            详情
+          </Button>
+          {record.status === "draft" && (
+            <Button
+              type="link"
+              size="small"
+              icon={<SendOutlined />}
+              onClick={() => handleSubmit(record)}
+            >
+              提交
+            </Button>
+          )}
+        </>
       ),
     },
   ];

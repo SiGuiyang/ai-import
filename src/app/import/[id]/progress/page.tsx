@@ -53,13 +53,17 @@ export default function TaskProgressPage() {
 
   const fetchTask = useCallback(async () => {
     try {
+      // 使用 cache: 'no-store' 避免 Next.js 缓存导致轮询返回旧数据
+      // 使用 ?_t=xxx 破缓存作为双保险
+      const cacheBuster = `?_t=${Date.now()}`;
       const [taskRes, errorsRes] = await Promise.all([
-        fetch(`/api/import-tasks/${taskId}`),
-        fetch(`/api/import-tasks/${taskId}/errors?page=1&pageSize=10`),
+        fetch(`/api/import-tasks/${taskId}${cacheBuster}`, { cache: "no-store" }),
+        fetch(`/api/import-tasks/${taskId}/errors?page=1&pageSize=10&_t=${Date.now()}`, { cache: "no-store" }),
       ]);
 
       if (taskRes.ok) {
-        setTask(await taskRes.json());
+        const data = await taskRes.json();
+        setTask(data);
       }
       if (errorsRes.ok) {
         const errData = await errorsRes.json();
@@ -77,10 +81,11 @@ export default function TaskProgressPage() {
     fetchTask();
   }, [fetchTask]);
 
-  // 自动刷新（处理中时每 2s 刷新）
+  // 自动刷新（处理中时每 2s 刷新，完成后立即停）
   useEffect(() => {
     if (!autoRefresh) return;
-    if (task?.task?.status !== "processing" && task?.task?.status !== "pending") {
+    const status = task?.task?.status;
+    if (status !== "processing" && status !== "pending") {
       return;
     }
     const timer = setInterval(fetchTask, 2000);

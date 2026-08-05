@@ -70,7 +70,7 @@ export default function ImportTasksPage() {
         params.set("pageSize", String(pageSize));
         if (status) params.set("status", status);
 
-        const res = await fetch(`/api/import-tasks?${params.toString()}`);
+        const res = await fetch(`/api/import-tasks?${params.toString()}`, { cache: "no-store" });
         const data = await res.json();
         if (data.tasks) {
           setTasks(data.tasks);

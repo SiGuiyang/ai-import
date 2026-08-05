@@ -38,3 +38,45 @@ export async function GET(
     );
   }
 }
+
+// PATCH /api/orders/[id] - 提交运单（draft -> submitted）
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  try {
+    const [order] = await db
+      .select()
+      .from(orders)
+      .where(eq(orders.id, params.id));
+
+    if (!order) {
+      return NextResponse.json(
+        { success: false, error: "运单不存在" },
+        { status: 404 }
+      );
+    }
+
+    if (order.status !== "draft") {
+      return NextResponse.json(
+        { success: false, error: "只有草稿状态的运单可以提交" },
+        { status: 400 }
+      );
+    }
+
+    await db
+      .update(orders)
+      .set({
+        status: "submitted",
+        submittedAt: new Date(),
+      })
+      .where(eq(orders.id, params.id));
+
+    return NextResponse.json({ success: true });
+  } catch (err: any) {
+    return NextResponse.json(
+      { success: false, error: err.message || "提交运单失败" },
+      { status: 500 }
+    );
+  }
+}

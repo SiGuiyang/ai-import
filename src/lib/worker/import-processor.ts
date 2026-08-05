@@ -113,7 +113,7 @@ export async function processShardJob(
 
     if (shardOrders.length === 0) {
       // 空分片：直接标记完成
-      await markShardCompleted(taskId, shardIndex, traceId);
+      await markShardCompleted(taskId, shardIndex, 0, 0, traceId);
       return;
     }
 
@@ -223,15 +223,19 @@ export async function processShardJob(
       }
     }
 
-    // ========== Step 4: 批量写入订单 ==========
+    // ========== Step 4: 逐行写入订单（失败不阻断） ==========
     const insertStart = performance.now();
     let insertedOrders = 0;
+    let insertErrors = 0;
+    const insertErrorRecords: any[] = [];
 
-    try {
-      // 构建 orders 数据
-      const orderValues = shardOrders.map((order) => ({
+    // 逐行插入，单条失败则记录错误 + 跳过，不阻断分片
+    const BATCH_SIZE = 200;
+    const orderValues = shardOrders.map((order, idx) => ({
+      idx,
+      values: {
         externalCode: order.externalCode || null,
-        importId: taskId, // 使用 task ID 作为 import ID
+        importId: taskId,
         taskId,
         storeName: order.storeName || null,
         receiverName: order.receiverName || null,
@@ -240,73 +244,89 @@ export async function processShardJob(
         remark: order.remark || null,
         status: "draft",
         createdAt: new Date(),
-      }));
+      } as any,
+      items: order.items || [],
+    }));
 
-      // 批量插入 orders（使用 transaction 分批，避免超长语句）
-      const BATCH_SIZE = 200;
-      const insertedIds: string[] = [];
+    const allItemValues: any[] = [];
 
-      for (let i = 0; i < orderValues.length; i += BATCH_SIZE) {
-        const batch = orderValues.slice(i, i + BATCH_SIZE);
-        const result = await db
-          .insert(orders)
-          .values(batch as any)
-          .returning({ id: orders.id });
-        insertedIds.push(...result.map((r: any) => r.id));
-      }
+    for (let i = 0; i < orderValues.length; i += BATCH_SIZE) {
+      const batch = orderValues.slice(i, i + BATCH_SIZE);
 
-      insertedOrders = insertedIds.length;
+      for (const { idx, values, items: itemList } of batch) {
+        const rowNumber = startRow + idx;
+        try {
+          const [result] = await db
+            .insert(orders)
+            .values(values)
+            .returning({ id: orders.id });
 
-      // 构建 orderItems 数据
-      const itemValues: any[] = [];
-      for (let i = 0; i < shardOrders.length; i++) {
-        const order = shardOrders[i];
-        const orderId = insertedIds[i];
-        if (order.items) {
-          order.items.forEach((item, idx) => {
-            itemValues.push({
+          const orderId = result.id;
+          insertedOrders++;
+
+          // 构建该订单的 orderItems
+          itemList.forEach((item: any, itemIdx: number) => {
+            allItemValues.push({
               orderId,
               skuCode: item.skuCode || "",
               skuName: item.skuName || "",
               quantity: item.quantity || 1,
               specification: item.specification || null,
-              sortOrder: idx + 1,
-              lineNo: idx + 1,
+              sortOrder: itemIdx + 1,
+              lineNo: itemIdx + 1,
             });
+          });
+        } catch (rowErr: any) {
+          insertErrors++;
+          insertErrorRecords.push({
+            taskId,
+            shardIndex,
+            rowNumber,
+            fieldName: "__order__",
+            rawValue: JSON.stringify(values),
+            errorCode: "DB_INSERT_ERROR",
+            errorReason: `行 ${rowNumber} 写入失败: ${rowErr.message}`,
+            traceId,
           });
         }
       }
+    }
 
-      // 批量插入 orderItems
-      if (itemValues.length > 0) {
-        for (let i = 0; i < itemValues.length; i += BATCH_SIZE) {
-          const batch = itemValues.slice(i, i + BATCH_SIZE);
+    // 批量写入 orderItems（只写成功订单的 items）
+    if (allItemValues.length > 0) {
+      for (let i = 0; i < allItemValues.length; i += BATCH_SIZE) {
+        const batch = allItemValues.slice(i, i + BATCH_SIZE);
+        try {
           await db.insert(orderItems).values(batch as any);
+        } catch (itemErr: any) {
+          // orderItems 写入失败：单独记录
+          insertErrors++;
+          insertErrorRecords.push({
+            taskId,
+            shardIndex,
+            rowNumber: startRow,
+            fieldName: "__order_items__",
+            rawValue: `batch ${i / BATCH_SIZE}`,
+            errorCode: "DB_INSERT_ERROR",
+            errorReason: `OrderItems 批量写入失败: ${itemErr.message}`,
+            traceId,
+          });
         }
       }
-    } catch (insertErr: any) {
+    }
+
+    // 记录插入失败的错误明细
+    if (insertErrorRecords.length > 0) {
+      await db.insert(importTaskErrors).values(insertErrorRecords as any);
       addTraceEvent({
         traceId,
         taskId,
         shardIndex,
-        eventName: "INSERT_ERROR",
+        eventName: "INSERT_PARTIAL_ERRORS",
         eventStatus: "error",
-        message: insertErr.message,
+        message: `${insertErrors} rows failed during insert, skipped`,
+        metadata: { insertErrors, insertedOrders, totalRows: shardOrders.length },
       });
-
-      // 写通用错误
-      await db.insert(importTaskErrors).values([
-        {
-          taskId,
-          shardIndex,
-          rowNumber: startRow,
-          errorCode: "DB_INSERT_ERROR",
-          errorReason: `Database insert failed: ${insertErr.message}`,
-          traceId,
-        },
-      ] as any);
-
-      throw insertErr;
     }
 
     const insertDuration = performance.now() - insertStart;
@@ -329,7 +349,7 @@ export async function processShardJob(
     ] as any);
 
     // ========== Step 6: 标记分片完成 + 更新任务进度 ==========
-    await markShardCompleted(taskId, shardIndex, traceId);
+    await markShardCompleted(taskId, shardIndex, insertedOrders, insertErrors, traceId);
 
     addTraceEvent({
       traceId,
@@ -388,6 +408,8 @@ export async function processShardJob(
 async function markShardCompleted(
   taskId: string,
   shardIndex: number,
+  successCount: number,
+  failedCount: number,
   traceId: string
 ): Promise<void> {
   // 更新分片状态
@@ -401,12 +423,16 @@ async function markShardCompleted(
       sql`${importTaskShards.taskId} = ${taskId} AND ${importTaskShards.shardIndex} = ${shardIndex}`
     );
 
-  // 更新任务进度（原子递增 completedShards）
+  const processedCount = successCount + failedCount;
+
+  // 更新任务进度（原子递增）
   await db
     .update(importTasks)
     .set({
       completedShards: sql`completed_shards + 1`,
-      processedRows: sql`processed_rows + (SELECT row_count FROM batch_performance_log WHERE task_id = ${taskId} AND shard_index = ${shardIndex} ORDER BY created_at DESC LIMIT 1)`,
+      processedRows: sql`processed_rows + ${processedCount}`,
+      successRows: sql`success_rows + ${successCount}`,
+      failedRows: sql`failed_rows + ${failedCount}`,
       updatedAt: new Date(),
     } as any)
     .where(eq(importTasks.id, taskId as any));
@@ -432,7 +458,7 @@ async function markShardCompleted(
       traceId,
       taskId,
       eventName: "TASK_COMPLETED",
-      message: `Task completed: ${task.completedShards}/${task.totalShards} shards, status=${newStatus}`,
+      message: `Task completed: ${task.completedShards}/${task.totalShards} shards, success=${task.successRows}, failed=${task.failedRows}, status=${newStatus}`,
     });
   }
 }

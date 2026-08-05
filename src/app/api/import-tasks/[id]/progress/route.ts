@@ -54,6 +54,8 @@ export async function GET(
         progress: total > 0 ? Math.round((completed / total) * 100) : 0,
         totalRows: task.totalRows || 0,
         processedRows: task.processedRows || 0,
+        successRows: task.successRows || 0,
+        failedRows: task.failedRows || 0,
         fileName: task.fileName,
         shards: {
           total,

@@ -15,6 +15,8 @@ import { getQueueMetrics } from "@/lib/queue";
  * - 队列积压深度
  * - 阶段耗时 P50/P95/P99
  * - 错误类型分布
+ * - 任务统计（最近 24h）
+ * - 最近任务 Top N
  */
 export async function GET() {
   try {
@@ -86,19 +88,52 @@ export async function GET() {
     }
 
     // 5. 任务状态统计（最近 24h）
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
     const taskStatsQuery = db
       .select({
         status: importTasks.status,
         taskCount: sql<number>`COUNT(*)::int`,
       })
       .from(importTasks)
+      .where(sql`${importTasks.createdAt} >= ${dayAgo.toISOString()}`)
       .groupBy(importTasks.status);
 
-    const [throughputs, errors, perf, taskStats] = await Promise.all([
+    // 6. 任务聚合统计（最近 24h）
+    const taskSummaryQuery = db
+      .select({
+        totalTasks: sql<number>`COUNT(*)::int`,
+        totalRows: sql<number>`COALESCE(SUM(${importTasks.totalRows}), 0)`,
+        successRows: sql<number>`COALESCE(SUM(${importTasks.successRows}), 0)`,
+        failedRows: sql<number>`COALESCE(SUM(${importTasks.failedRows}), 0)`,
+        completedTasks: sql<number>`COUNT(*) FILTER (WHERE ${importTasks.status} = 'completed')::int`,
+        failedTasks: sql<number>`COUNT(*) FILTER (WHERE ${importTasks.status} = 'failed')::int`,
+      })
+      .from(importTasks)
+      .where(sql`${importTasks.createdAt} >= ${dayAgo.toISOString()}`);
+
+    // 7. 最近任务 Top 10
+    const recentTasksQuery = db
+      .select({
+        id: importTasks.id,
+        fileName: importTasks.fileName,
+        fileType: importTasks.fileType,
+        status: importTasks.status,
+        totalRows: importTasks.totalRows,
+        successRows: importTasks.successRows,
+        failedRows: importTasks.failedRows,
+        createdAt: importTasks.createdAt,
+      })
+      .from(importTasks)
+      .orderBy(desc(importTasks.createdAt))
+      .limit(10);
+
+    const [throughputs, errors, perf, taskStats, taskSummary, recentTasks] = await Promise.all([
       Promise.all(throughputQueries),
       errorQuery,
       perfQuery,
       taskStatsQuery,
+      taskSummaryQuery,
+      recentTasksQuery,
     ]);
 
     return NextResponse.json({
@@ -110,6 +145,8 @@ export async function GET() {
       performance: perf[0] || {},
       errors: errors,
       taskStats,
+      taskSummary: taskSummary[0] || {},
+      recentTasks,
       serverTime: now.toISOString(),
     });
   } catch (error: any) {

@@ -4,10 +4,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="refactor(parser): 优化文件预处理器支持多种缓冲区类型&#10;&#10;- 修改 preprocessWord 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessPdf 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessFile 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 移除 import 页面中的进度条显示组件&#10;- 修复多个页面 useEffect 依赖数组问题&#10;- 添加 import-tasks/[id]/shards API 路由实现&#10;- 优化数据库查询变量声明为常量">
+    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="refactor(worker): 优化SKU验证超时处理机制&#10;&#10;- 移除过时的isSkuValidationTimeout函数&#10;- 实现Promise.race超时控制机制替代简单的性能检测&#10;- 添加SKU查询超时时的降级处理逻辑&#10;- 优化空SKU集的处理跳过验证步骤&#10;- 添加任务降级时的详细日志输出&#10;- 统一SKU查询异常和超时的错误处理路径">
       <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/dump.rdb" beforeDir="false" afterPath="$PROJECT_DIR$/dump.rdb" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/db/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/db/schema.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/outbox/dispatcher.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/outbox/dispatcher.ts" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/lib/worker/import-processor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/worker/import-processor.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -360,7 +361,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785900302470</updated>
     </task>
-    <option name="localTasksCounter" value="38" />
+    <task id="LOCAL-00038" summary="refactor(worker): 优化SKU验证超时处理机制&#10;&#10;- 移除过时的isSkuValidationTimeout函数&#10;- 实现Promise.race超时控制机制替代简单的性能检测&#10;- 添加SKU查询超时时的降级处理逻辑&#10;- 优化空SKU集的处理跳过验证步骤&#10;- 添加任务降级时的详细日志输出&#10;- 统一SKU查询异常和超时的错误处理路径">
+      <option name="closed" value="true" />
+      <created>1785902658266</created>
+      <option name="number" value="00038" />
+      <option name="presentableId" value="LOCAL-00038" />
+      <option name="project" value="LOCAL" />
+      <updated>1785902658266</updated>
+    </task>
+    <option name="localTasksCounter" value="39" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -375,7 +384,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="feat(import): 完善文件导入系统架构与功能&#10;&#10;- 添加文件去重策略，使用 SHA-256 哈希算法和 24 小时窗口&#10;- 实现上传防重复点击，使用 useRef 和状态锁双重保护&#10;- 设计事务原子性保证，所有数据库操作在单个事务中完成&#10;- 构建完整的 Outbox 可靠性保证机制，包括状态生命周期管理&#10;- 实现 Worker 异步处理流程，支持 V2 规则映射和跨行聚合&#10;- 添加四层幂等保护机制，确保重复处理的安全性&#10;- 建立精细化错误记录体系，支持错误码分类和修复建议&#10;- 实现复合业务键 UPSERT，避免重复数据写入&#10;- 优化数据库表结构，增加 content_hash 和版本控制字段&#10;- 集成 Upstash Redis 用于缓存和分布式锁功能&#10;- 完善前端任务详情页面，支持错误筛选和详细信息展示&#10;- 重构 API 响应格式，统一数据结构和错误处理机制" />
     <MESSAGE value="config(redis): 更新 Upstash Redis 环境变量名称&#10;&#10;- 将环境变量名从 UPSTASH_REDIS_URL 和 UPSTASH_REDIS_TOKEN &#10;  更改为 UPSTASH_REDIS_KV_REST_API_URL 和 UPSTASH_REDIS_KV_REST_API_TOKEN&#10;- 更新控制台警告消息中的环境变量名称&#10;- 保持 Redis 客户端初始化逻辑不变" />
     <MESSAGE value="feat(import): 支持AI直接导入模式和规则引擎导入模式&#10;&#10;- 在import-worker.ts中新增importMode参数，支持'rule-engine'和'ai-direct'两种模式&#10;- AI直连模式下跳过规则映射步骤，直接将解析的数据转为MappedRow格式&#10;- 规则页面重构为双模式选择界面，支持AI生成规则和手动创建规则&#10;- 新增AI直接解析功能，可实时预览解析结果并确认导入&#10;- 新增规则引擎导入流程，通过选择规则后上传文件进行导入&#10;- 首页改版为多选项卡界面，分别展示AI智能解析和规则引擎导入入口&#10;- 添加完整的错误处理和用户提示信息" />
     <MESSAGE value="feat(homepage): 重构首页为多步骤AI智能导入流程&#10;&#10;- 替换标签页设计为四步骤流程（上传文件、AI分析、预览编辑、完成）&#10;- 集成AI自动分析功能，支持文件格式检测和规则自动生成&#10;- 添加数据验证、去重警告和统计信息展示&#10;- 实现异步上传和批量提交订单功能&#10;- 集成规则管理和编辑功能&#10;- 添加文件预览和数据编辑表格组件&#10;- 改进错误处理和用户反馈机制" />
@@ -400,6 +408,7 @@
     <MESSAGE value="fix(parser): 解决字段映射错误处理和多工作表支持问题&#10;&#10;- 修复字段映射时使用错误的列名映射格式导致的数据解析问题&#10;- 添加对Excel多工作表的支持，通过sheetIndex/sheetName切换当前工作表&#10;- 改进字段映射回退机制，当fieldPath找不到值时使用mapping key作为记录key&#10;- 修复预处理器中ArrayBuffer到Uint8Array的转换问题避免数据损坏&#10;- 优化合并数据逻辑防止因长度不匹配导致的数据截断问题&#10;- 增强工作表有效性检查防止解析空数据引发异常&#10;- 修复AI分析器中的fieldPath映射错误确保正确的目标字段名使用&#10;- 完善Redis连接错误处理和重试机制提高队列稳定性" />
     <MESSAGE value="feat(api): 添加导入任务错误查询接口&#10;&#10;- 实现 GET /api/import-tasks/:id/errors 接口用于查询行级错误明细&#10;- 支持分页查询，包含页码和每页大小参数&#10;- 支持按分片索引和错误代码过滤条件&#10;- 返回错误列表及总数统计信息&#10;- 集成数据库查询逻辑，使用 drizzle-orm 进行数据操作&#10;- 添加错误处理机制，捕获查询异常并返回相应错误信息" />
     <MESSAGE value="refactor(parser): 优化文件预处理器支持多种缓冲区类型&#10;&#10;- 修改 preprocessWord 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessPdf 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessFile 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 移除 import 页面中的进度条显示组件&#10;- 修复多个页面 useEffect 依赖数组问题&#10;- 添加 import-tasks/[id]/shards API 路由实现&#10;- 优化数据库查询变量声明为常量" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(parser): 优化文件预处理器支持多种缓冲区类型&#10;&#10;- 修改 preprocessWord 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessPdf 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessFile 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 移除 import 页面中的进度条显示组件&#10;- 修复多个页面 useEffect 依赖数组问题&#10;- 添加 import-tasks/[id]/shards API 路由实现&#10;- 优化数据库查询变量声明为常量" />
+    <MESSAGE value="refactor(worker): 优化SKU验证超时处理机制&#10;&#10;- 移除过时的isSkuValidationTimeout函数&#10;- 实现Promise.race超时控制机制替代简单的性能检测&#10;- 添加SKU查询超时时的降级处理逻辑&#10;- 优化空SKU集的处理跳过验证步骤&#10;- 添加任务降级时的详细日志输出&#10;- 统一SKU查询异常和超时的错误处理路径" />
+    <option name="LAST_COMMIT_MESSAGE" value="refactor(worker): 优化SKU验证超时处理机制&#10;&#10;- 移除过时的isSkuValidationTimeout函数&#10;- 实现Promise.race超时控制机制替代简单的性能检测&#10;- 添加SKU查询超时时的降级处理逻辑&#10;- 优化空SKU集的处理跳过验证步骤&#10;- 添加任务降级时的详细日志输出&#10;- 统一SKU查询异常和超时的错误处理路径" />
   </component>
 </project>

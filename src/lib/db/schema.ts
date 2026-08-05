@@ -199,6 +199,7 @@ export const eventOutbox = pgTable("event_outbox", {
   payload: jsonb("payload").notNull(),
   status: outboxStatusEnum("status").notNull().default("pending"),
   retryCount: integer("retry_count").default(0),
+  errorMessage: text("error_message"),
   nextRetryAt: timestamp("next_retry_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   sentAt: timestamp("sent_at"),

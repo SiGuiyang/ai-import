@@ -62,12 +62,13 @@ export async function dispatchOutboxBatch(limit = BATCH_SIZE): Promise<{
         `[Outbox] Failed to dispatch event ${event.id}: ${err.message}`
       );
 
-      // 更新重试计数
+      // 更新重试计数 + 记录错误原因
       const newRetryCount = (event.retryCount || 0) + 1;
       await db
         .update(eventOutbox)
         .set({
           retryCount: newRetryCount,
+          errorMessage: `[${new Date().toISOString()}] ${err.message}`,
           status: newRetryCount >= 5 ? "failed" : "pending",
           nextRetryAt: newRetryCount >= 5
             ? undefined
@@ -76,6 +77,7 @@ export async function dispatchOutboxBatch(limit = BATCH_SIZE): Promise<{
         .where(eq(eventOutbox.id, event.id));
 
       failed++;
+      // 不抛出，继续处理下一个事件
     }
   }
 
