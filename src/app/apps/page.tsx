@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import {
   Card,
   Table,
@@ -50,7 +50,7 @@ export default function AppsPage() {
   const [showSecret, setShowSecret] = useState(false);
   const [form] = Form.useForm();
 
-  const fetchApps = async () => {
+  const fetchApps = useCallback(async () => {
     setLoading(true);
     try {
       const params = new URLSearchParams();
@@ -65,11 +65,11 @@ export default function AppsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [keyword]);
 
   useEffect(() => {
     fetchApps();
-  }, []);
+  }, [fetchApps]);
 
   const handleCreate = async () => {
     try {

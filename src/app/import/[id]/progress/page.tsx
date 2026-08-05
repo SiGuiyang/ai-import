@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Card,
   Descriptions,
@@ -51,7 +51,7 @@ export default function TaskProgressPage() {
   const [errorTotal, setErrorTotal] = useState(0);
   const [autoRefresh, setAutoRefresh] = useState(true);
 
-  const fetchTask = async () => {
+  const fetchTask = useCallback(async () => {
     try {
       const [taskRes, errorsRes] = await Promise.all([
         fetch(`/api/import-tasks/${taskId}`),
@@ -71,11 +71,11 @@ export default function TaskProgressPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [taskId]);
 
   useEffect(() => {
     fetchTask();
-  }, [taskId]);
+  }, [fetchTask]);
 
   // 自动刷新（处理中时每 2s 刷新）
   useEffect(() => {
@@ -85,7 +85,7 @@ export default function TaskProgressPage() {
     }
     const timer = setInterval(fetchTask, 2000);
     return () => clearInterval(timer);
-  }, [task?.task?.status, autoRefresh]);
+  }, [task?.task?.status, autoRefresh, fetchTask]);
 
   if (loading) {
     return (

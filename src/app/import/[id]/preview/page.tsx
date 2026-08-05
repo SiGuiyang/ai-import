@@ -69,9 +69,9 @@ export default function DataPreviewPage() {
   // 加载数据
   useEffect(() => {
     fetchData();
-  }, [importId]);
+  }, [fetchData]);
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch(`/api/import/${importId}/data`);
@@ -85,7 +85,7 @@ export default function DataPreviewPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [importId]);
 
   // 执行校验
   const handleValidate = useCallback(async () => {
