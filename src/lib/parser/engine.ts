@@ -25,14 +25,32 @@ export async function parseFile(
   let allIntermediate: Record<string, any>[] = [];
   const errors: string[] = [];
 
+  // 防御：检查 workbook 是否有效
+  if (!workbook || !Array.isArray(workbook.sheets) || workbook.sheets.length === 0) {
+    return { orders: [], totalRows: 0, parsedRows: 0, errors: ["文件解析失败：未读取到有效的工作表数据"] };
+  }
+
   // 过滤启用且非 group-by 的步骤（group-by 在后续处理）
   const activeSteps = steps.filter((s) => s.enabled && s.type !== "group-by");
   const groupByStep = steps.find((s) => s.enabled && s.type === "group-by");
 
   const totalSteps = activeSteps.length;
 
+  // 当前选中的工作表，默认第一个；跨步骤保持，可通过 sheetIndex / sheetName 切换
+  let currentSheet = workbook.sheets[0];
+
   for (let i = 0; i < activeSteps.length; i++) {
     const step = activeSteps[i];
+
+    // 根据步骤 config 的 sheetIndex / sheetName 切换工作表
+    const sheetIndex = step.config?.sheetIndex;
+    const sheetName = step.config?.sheetName;
+    if (sheetName) {
+      const found = workbook.sheets.find((s) => s.name === sheetName);
+      if (found) currentSheet = found;
+    } else if (typeof sheetIndex === "number" && workbook.sheets[sheetIndex]) {
+      currentSheet = workbook.sheets[sheetIndex];
+    }
 
     onProgress?.({
       current: i,
@@ -49,23 +67,27 @@ export async function parseFile(
         stepResults = extractor.extractFromSheets(workbook.sheets, step.config);
       } else if (step.type === "cell-split") {
         // cell-split 需要 inputData，如果已有中间数据则使用
-        const inputData = allIntermediate.length > 0 ? allIntermediate : workbook.sheets[0]?.cells;
+        const inputData = allIntermediate.length > 0 ? allIntermediate : currentSheet.cells;
         stepResults = executeStep(
-          { ...workbook.sheets[0], cells: [] } as any,
+          { ...currentSheet, cells: [] } as any,
           { ...step, config: { ...step.config, inputData } }
         );
       } else {
-        stepResults = executeStep(workbook.sheets[0], step);
+        stepResults = executeStep(currentSheet, step);
       }
 
       if (stepResults.length > 0) {
         // 如果是后续步骤，将上一轮结果合并
         if (allIntermediate.length > 0) {
-          // 将上一个步骤的结果作为这个步骤的附件数据
-          const merged = allIntermediate.map((prev, idx) => ({
-            ...prev,
-            ...(stepResults[idx] || {}),
-          }));
+          // 将上一个步骤的结果作为这个步骤的附加数据，取两者最大长度避免截断
+          const maxLen = Math.max(allIntermediate.length, stepResults.length);
+          const merged: Record<string, any>[] = [];
+          for (let idx = 0; idx < maxLen; idx++) {
+            merged.push({
+              ...(allIntermediate[idx] || {}),
+              ...(stepResults[idx] || {}),
+            });
+          }
           allIntermediate = merged;
         } else {
           allIntermediate = stepResults;

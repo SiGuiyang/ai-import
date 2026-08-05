@@ -11,6 +11,7 @@
 
 import "dotenv/config";
 import { createWorker, shutdownWorker } from "../src/lib/worker";
+import { startOutboxDispatcher } from "../src/lib/outbox/dispatcher";
 
 const CONCURRENCY = parseInt(process.env.WORKER_CONCURRENCY || "2", 10);
 
@@ -22,10 +23,15 @@ async function main() {
 
   // 启动 Worker
   const worker = createWorker(CONCURRENCY);
+  void worker; // 保持引用避免被优化
+
+  // 启动 Outbox 分发器（补偿机制，处理 API 入队失败的事件）
+  const outboxInterval = startOutboxDispatcher();
 
   // 优雅退出
   const gracefulShutdown = async (signal: string) => {
     console.log(`\n[Worker] Received ${signal}, shutting down...`);
+    clearInterval(outboxInterval);
     await shutdownWorker();
     process.exit(0);
   };

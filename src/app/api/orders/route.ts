@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
 import { orders, orderItems } from "@/lib/db/schema";
-import { desc, like, or, and, gte, lte, sql } from "drizzle-orm";
+import { desc, like, or, and, gte, lte, sql, inArray } from "drizzle-orm";
 
 // GET /api/orders - 运单列表
 export async function GET(request: NextRequest) {
@@ -59,9 +59,7 @@ export async function GET(request: NextRequest) {
           count: sql<number>`count(*)`,
         })
         .from(orderItems)
-        .where(
-          sql`${orderItems.orderId} IN (${orderIds.map((id) => `'${id}'`).join(",")})`
-        )
+        .where(inArray(orderItems.orderId, orderIds))
         .groupBy(orderItems.orderId);
 
       itemCounts.forEach((row: any) => {

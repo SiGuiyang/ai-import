@@ -7,13 +7,13 @@ export function applyFieldMapping(
 ): ParsedOrder[] {
   if (!intermediateData || intermediateData.length === 0) return [];
 
-  const getValue = (record: Record<string, any>, source?: FieldSource): any => {
+  const getValue = (record: Record<string, any>, source?: FieldSource, fallbackKey?: string): any => {
     if (!source) return undefined;
     // 支持嵌套字段路径，如 "items[0].skuCode"
     const parts = source.fieldPath.split(".");
     let val: any = record;
     for (const part of parts) {
-      if (val == null) return null;
+      if (val == null) break;
       // 处理数组索引，如 items[0]
       const arrayMatch = part.match(/^(\w+)\[(\d+)\]$/);
       if (arrayMatch) {
@@ -22,7 +22,14 @@ export function applyFieldMapping(
         val = val[part];
       }
     }
-    return val;
+
+    // 如果 fieldPath 找不到值，尝试用 mapping key 作为记录 key 回退
+    // 处理列映射已转换为目标字段名但 fieldPath 仍为原始列名的情况
+    if (val == null && fallbackKey && fallbackKey !== source.fieldPath) {
+      val = record[fallbackKey];
+    }
+
+    return val ?? null;
   };
 
   const applyTransform = (value: any, transform?: string): any => {
@@ -41,6 +48,11 @@ export function applyFieldMapping(
     }
   };
 
+  // 辅助：从记录中取值，fieldPath 找不到时用 mappingKey 作为记录 key 回退
+  const getField = (record: Record<string, any>, key: keyof FieldMapping) => {
+    return getValue(record, fieldMapping[key], key);
+  };
+
   // 按外部编码或指定字段分组
   const groups: Map<string, Record<string, any>[]> = new Map();
 
@@ -53,7 +65,7 @@ export function applyFieldMapping(
   } else if (fieldMapping.externalCode) {
     for (const record of intermediateData) {
       const key = String(
-        getValue(record, fieldMapping.externalCode) ?? "__no_group__"
+        getField(record, "externalCode") ?? "__no_group__"
       );
       if (!groups.has(key)) groups.set(key, []);
       groups.get(key)!.push(record);
@@ -74,28 +86,28 @@ export function applyFieldMapping(
 
     const order: ParsedOrder = {
       externalCode,
-      storeName: applyTransform(getValue(firstRecord, fieldMapping.storeName), fieldMapping.storeName?.transform),
-      receiverName: applyTransform(getValue(firstRecord, fieldMapping.receiverName), fieldMapping.receiverName?.transform),
-      receiverPhone: applyTransform(getValue(firstRecord, fieldMapping.receiverPhone), fieldMapping.receiverPhone?.transform),
-      receiverAddress: applyTransform(getValue(firstRecord, fieldMapping.receiverAddress), fieldMapping.receiverAddress?.transform),
-      remark: applyTransform(getValue(firstRecord, fieldMapping.remark), fieldMapping.remark?.transform),
+      storeName: applyTransform(getField(firstRecord, "storeName"), fieldMapping.storeName?.transform),
+      receiverName: applyTransform(getField(firstRecord, "receiverName"), fieldMapping.receiverName?.transform),
+      receiverPhone: applyTransform(getField(firstRecord, "receiverPhone"), fieldMapping.receiverPhone?.transform),
+      receiverAddress: applyTransform(getField(firstRecord, "receiverAddress"), fieldMapping.receiverAddress?.transform),
+      remark: applyTransform(getField(firstRecord, "remark"), fieldMapping.remark?.transform),
       items: groupRecords.map((record, idx): ParsedOrderItem => ({
         skuCode: applyTransform(
-          getValue(record, fieldMapping.skuCode),
+          getField(record, "skuCode"),
           fieldMapping.skuCode?.transform
         ) || "",
         skuName: applyTransform(
-          getValue(record, fieldMapping.skuName),
+          getField(record, "skuName"),
           fieldMapping.skuName?.transform
         ) || "",
         quantity: Number(
           applyTransform(
-            getValue(record, fieldMapping.quantity),
+            getField(record, "quantity"),
             fieldMapping.quantity?.transform
           ) || 0
         ),
         specification: applyTransform(
-          getValue(record, fieldMapping.specification),
+          getField(record, "specification"),
           fieldMapping.specification?.transform
         ),
         sortOrder: idx,

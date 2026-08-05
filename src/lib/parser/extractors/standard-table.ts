@@ -35,11 +35,12 @@ export class StandardTableExtractor implements Extractor {
       let hasData = false;
 
       // 按 columnMapping 映射字段
-      for (const [targetField, sourceCol] of Object.entries(columnMapping)) {
-        const colIdx = typeof sourceCol === "number" ? sourceCol : colIndexMap[sourceCol as string];
+      // columnMapping 格式：{ 原始列名: 目标字段名 }，例如 { "编码": "SKU编码" }
+      for (const [sourceCol, targetField] of Object.entries(columnMapping)) {
+        const colIdx = colIndexMap[String(sourceCol)];
         if (colIdx === undefined) continue;
         const cell = row[colIdx];
-        record[targetField] = cell?.value ?? null;
+        record[targetField as string] = cell?.value ?? null;
         if (cell?.value != null) hasData = true;
       }
 
@@ -48,6 +49,7 @@ export class StandardTableExtractor implements Extractor {
         for (const key of Object.keys(record)) {
           if (record[key] == null && filledValues[r - 1]?.[key] != null) {
             record[key] = filledValues[r - 1][key];
+            hasData = true;
           }
         }
       }

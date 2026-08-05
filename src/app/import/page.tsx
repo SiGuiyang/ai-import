@@ -10,16 +10,13 @@ import {
   Typography,
   message,
   Progress,
-  Steps,
   Empty,
-  Descriptions,
 } from "antd";
 import {
   InboxOutlined,
   FileExcelOutlined,
   FilePdfOutlined,
   FileWordOutlined,
-  CheckCircleOutlined,
   CloseCircleOutlined,
 } from "@ant-design/icons";
 import { useRouter } from "next/navigation";
@@ -36,9 +33,7 @@ interface RuleOption {
 
 export default function ImportPage() {
   const router = useRouter();
-  const [step, setStep] = useState(0);
   const [file, setFile] = useState<File | null>(null);
-  const [importId, setImportId] = useState<string | null>(null);
   const [rules, setRules] = useState<RuleOption[]>([]);
   const [selectedRule, setSelectedRule] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
@@ -77,78 +72,41 @@ export default function ImportPage() {
     },
     onRemove: () => {
       setFile(null);
-      setStep(0);
     },
   };
 
-  // 上传文件到服务器
-  const handleUpload = async () => {
-    if (!file) return;
-    const formData = new FormData();
-    formData.append("file", file);
-
-    try {
-      const res = await fetch("/api/import/upload", {
-        method: "POST",
-        body: formData,
-      });
-      const data = await res.json();
-      if (data.success) {
-        setImportId(data.data.id);
-        setStep(1);
-        message.success("文件上传成功");
-      } else {
-        message.error(data.error || "上传失败");
-      }
-    } catch {
-      message.error("上传失败");
-    }
-  };
-
-  // 开始解析
+  // 开始解析（V4 异步流程：直接 POST 文件+规则到 import-tasks）
   const handleParse = async () => {
-    if (!importId || !selectedRule) return;
+    if (!file || !selectedRule) return;
 
-    // 更新 import 的 ruleId
     setParsing(true);
     setParseError(null);
 
     try {
-      const eventSource = new EventSource(
-        `/api/import/${importId}/parse?ruleId=${selectedRule}`
-      );
+      const formData = new FormData();
+      formData.append("file", file);
+      formData.append("ruleId", selectedRule);
 
-      eventSource.addEventListener("progress", (event) => {
-        const data = JSON.parse(event.data);
-        setProgress(data.percent);
-        setProgressMessage(data.message);
+      const res = await fetch("/api/import-tasks", {
+        method: "POST",
+        body: formData,
       });
 
-      eventSource.addEventListener("complete", (event) => {
-        const data = JSON.parse(event.data);
-        eventSource.close();
-        setParsing(false);
-        message.success(`解析完成，共 ${data.parsedRows} 条记录`);
-        router.push(`/import/${importId}/preview`);
-      });
+      const data = await res.json();
 
-      // 应用层解析错误（event: parse-error）
-      eventSource.addEventListener("parse-error", (event: MessageEvent) => {
-        const data = JSON.parse(event.data || "{}");
-        eventSource.close();
+      if (res.ok && data.taskId) {
+        message.success("任务已创建，正在异步解析中");
+        // 跳转到 V4 异步进度页
+        router.push(`/import/${data.taskId}/progress`);
+      } else {
         setParsing(false);
-        setParseError(data.message || "解析失败");
-        message.error(data.message || "解析失败");
-      });
-
-      // 连接层错误（SSE 连接关闭/异常）
-      eventSource.onerror = () => {
-        eventSource.close();
-        setParsing(false);
-      };
+        const errMsg = data.error || "任务创建失败";
+        setParseError(errMsg);
+        message.error(errMsg);
+      }
     } catch {
       setParsing(false);
-      setParseError("解析启动失败");
+      setParseError("任务创建失败");
     }
   };
 
@@ -168,91 +126,65 @@ export default function ImportPage() {
         导入出库单文件
       </Title>
 
-      <Steps
-        current={step}
-        items={[
-          { title: "上传文件", icon: <InboxOutlined /> },
-          { title: "选择规则", icon: <CheckCircleOutlined /> },
-          { title: "执行解析", icon: <CheckCircleOutlined /> },
-        ]}
-        style={{ marginBottom: 32 }}
-      />
+      {/* 上传文件 */}
+      <Card style={{ borderRadius: 12, marginBottom: 16 }}>
+        <Text strong style={{ display: "block", marginBottom: 12 }}>
+          1. 上传文件
+        </Text>
+        <Dragger
+          {...uploadProps}
+          style={{ padding: "40px 0" }}
+        >
+          <p className="text-5xl mb-4">{getFileIcon()}</p>
+          <p className="text-lg mb-2">点击或拖拽文件到此区域上传</p>
+          <p className="text-gray-400">支持 .xlsx .xls .docx .pdf 格式，最大 20MB</p>
+        </Dragger>
 
-      {/* Step 0: 上传文件 */}
-      {step === 0 && (
-        <Card style={{ borderRadius: 12 }}>
-          <Dragger
-            {...uploadProps}
-            style={{ padding: "40px 0" }}
-          >
-            <p className="text-5xl mb-4">{getFileIcon()}</p>
-            <p className="text-lg mb-2">点击或拖拽文件到此区域上传</p>
-            <p className="text-gray-400">支持 .xlsx .xls .docx .pdf 格式，最大 20MB</p>
-          </Dragger>
-
-          {file && (
-            <div style={{ textAlign: "center", marginTop: 16 }}>
-              <Space>
-                <Text strong>{file.name}</Text>
-                <Text type="secondary">({(file.size / 1024).toFixed(1)} KB)</Text>
-              </Space>
-              <br />
-              <Button type="primary" onClick={handleUpload} style={{ marginTop: 12 }}>
-                确认上传
-              </Button>
-            </div>
-          )}
-        </Card>
-      )}
-
-      {/* Step 1: 选择规则 */}
-      {step === 1 && (
-        <Card style={{ borderRadius: 12 }}>
-          <Descriptions
-            title="已上传文件"
-            column={1}
-            style={{ marginBottom: 24 }}
-          >
-            <Descriptions.Item label="文件名">{file?.name}</Descriptions.Item>
-            <Descriptions.Item label="大小">
-              {((file?.size || 0) / 1024).toFixed(1)} KB
-            </Descriptions.Item>
-          </Descriptions>
-
-          <div style={{ marginBottom: 16 }}>
-            <Text strong style={{ display: "block", marginBottom: 8 }}>
-              选择解析规则
-            </Text>
-            <Select
-              placeholder="请选择解析规则"
-              style={{ width: 400 }}
-              value={selectedRule}
-              onChange={setSelectedRule}
-              options={rules.map((r) => ({
-                value: r.id,
-                label: r.name,
-              }))}
-              notFoundContent={<Empty description="暂无规则" />}
-            />
+        {file && (
+          <div style={{ textAlign: "center", marginTop: 12 }}>
+            <Space>
+              <Text strong>{file.name}</Text>
+              <Text type="secondary">({(file.size / 1024).toFixed(1)} KB)</Text>
+            </Space>
           </div>
+        )}
+      </Card>
 
-          <Space>
-            <Button
-              type="primary"
-              onClick={handleParse}
-              disabled={!selectedRule || parsing}
-            >
-              开始解析
-            </Button>
-            <Button onClick={() => router.push("/rules/new")}>新建规则</Button>
-          </Space>
-        </Card>
-      )}
+      {/* 选择规则 */}
+      <Card style={{ borderRadius: 12, marginBottom: 16 }}>
+        <Text strong style={{ display: "block", marginBottom: 12 }}>
+          2. 选择解析规则
+        </Text>
+        <Select
+          placeholder="请选择解析规则"
+          style={{ width: "100%", maxWidth: 500 }}
+          value={selectedRule}
+          onChange={(val) => {
+            setSelectedRule(val);
+            setParseError(null);
+          }}
+          options={rules.map((r) => ({
+            value: r.id,
+            label: r.name,
+          }))}
+          notFoundContent={<Empty description="暂无规则" />}
+        />
+        <div style={{ marginTop: 12 }}>
+          <Button
+            size="small"
+            type="link"
+            onClick={() => router.push("/rules/new")}
+            style={{ padding: 0 }}
+          >
+            + 新建解析规则
+          </Button>
+        </div>
+      </Card>
 
       {/* 解析进度 */}
       {parsing && (
-        <Card style={{ borderRadius: 12, marginTop: 16 }}>
-          <Title level={5}>正在解析...</Title>
+        <Card style={{ borderRadius: 12, marginBottom: 16 }}>
+          <Title level={5}>正在创建任务...</Title>
           <Progress percent={progress} status="active" />
           <Text type="secondary">{progressMessage}</Text>
         </Card>
@@ -260,12 +192,12 @@ export default function ImportPage() {
 
       {/* 解析失败 */}
       {parseError && (
-        <Card style={{ borderRadius: 12, marginTop: 16 }}>
+        <Card style={{ borderRadius: 12, marginBottom: 16 }}>
           <Space>
             <CloseCircleOutlined style={{ color: "#ff4d4f", fontSize: 24 }} />
             <div>
               <Text type="danger" strong>
-                解析失败
+                解析提交失败
               </Text>
               <br />
               <Text type="secondary">{parseError}</Text>
@@ -281,6 +213,19 @@ export default function ImportPage() {
           </Button>
         </Card>
       )}
+
+      {/* 提交按钮 */}
+      <div style={{ textAlign: "center", marginTop: 8 }}>
+        <Button
+          type="primary"
+          size="large"
+          disabled={!file || !selectedRule}
+          loading={parsing}
+          onClick={handleParse}
+        >
+          开始解析
+        </Button>
+      </div>
     </div>
   );
 }

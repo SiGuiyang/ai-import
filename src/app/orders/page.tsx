@@ -58,21 +58,25 @@ export default function OrdersPage() {
     total: 0,
   });
 
+  // 搜索表单的暂存状态（输入时不立即查询，点击"查询"按钮才生效）
+  const [pendingSearch, setPendingSearch] = useState("");
+  const [pendingDateRange, setPendingDateRange] = useState<[dayjs.Dayjs | null, dayjs.Dayjs | null] | null>(null);
+
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [detailLoading, setDetailLoading] = useState(false);
   const [orderDetail, setOrderDetail] = useState<OrderDetail | null>(null);
 
   const fetchOrders = useCallback(
-    async (page = pagination.page, pageSize = pagination.pageSize) => {
+    async (page = 1, pageSize = pagination.pageSize, searchValue = search, dateRangeValue = dateRange) => {
       setLoading(true);
       try {
         const params = new URLSearchParams();
         params.set("page", String(page));
         params.set("pageSize", String(pageSize));
-        if (search) params.set("search", search);
-        if (dateRange) {
-          params.set("startDate", dateRange[0]);
-          params.set("endDate", dateRange[1]);
+        if (searchValue) params.set("search", searchValue);
+        if (dateRangeValue) {
+          params.set("startDate", dateRangeValue[0]);
+          params.set("endDate", dateRangeValue[1]);
         }
 
         const res = await fetch(`/api/orders?${params.toString()}`);
@@ -92,12 +96,36 @@ export default function OrdersPage() {
         setLoading(false);
       }
     },
-    [search, dateRange, pagination.page, pagination.pageSize]
+    [search, dateRange, pagination.pageSize]
   );
 
   useEffect(() => {
     fetchOrders(1);
   }, [search, dateRange]);
+
+  // 点击查询
+  const handleSearch = () => {
+    let newDateRange: [string, string] | null = null;
+    if (pendingDateRange && pendingDateRange[0] && pendingDateRange[1]) {
+      newDateRange = [
+        pendingDateRange[0].startOf("day").toISOString(),
+        pendingDateRange[1].endOf("day").toISOString(),
+      ];
+    }
+    const newSearch = pendingSearch;
+    setSearch(newSearch);
+    setDateRange(newDateRange);
+    fetchOrders(1, pagination.pageSize, newSearch, newDateRange);
+  };
+
+  // 点击重置
+  const handleReset = () => {
+    setPendingSearch("");
+    setPendingDateRange(null);
+    setSearch("");
+    setDateRange(null);
+    fetchOrders(1, pagination.pageSize, "", null);
+  };
 
   const handleViewDetail = async (id: string) => {
     setDetailModalOpen(true);
@@ -196,28 +224,29 @@ export default function OrdersPage() {
       </Title>
 
       {/* 搜索栏 */}
-      <div style={{ marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap" }}>
+      <div style={{ marginBottom: 16, display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
         <Input
           placeholder="搜索外部编码 / 收件人姓名"
           prefix={<SearchOutlined />}
           style={{ width: 280 }}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
+          value={pendingSearch}
+          onChange={(e) => setPendingSearch(e.target.value)}
           allowClear
+          onPressEnter={handleSearch}
         />
         <RangePicker
           placeholder={["提交开始时间", "提交结束时间"]}
+          value={pendingDateRange as any}
           onChange={(dates) => {
-            if (dates && dates[0] && dates[1]) {
-              setDateRange([
-                dates[0].startOf("day").toISOString(),
-                dates[1].endOf("day").toISOString(),
-              ]);
-            } else {
-              setDateRange(null);
-            }
+            setPendingDateRange(dates ? [dates[0], dates[1]] : null);
           }}
         />
+        <Button type="primary" onClick={handleSearch}>
+          查询
+        </Button>
+        <Button onClick={handleReset}>
+          重置
+        </Button>
       </div>
 
       <Table

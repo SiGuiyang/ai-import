@@ -10,6 +10,7 @@ import {
   ApiOutlined,
   FundViewOutlined,
   NodeIndexOutlined,
+  FileTextOutlined,
 } from "@ant-design/icons";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -31,6 +32,11 @@ const menuItems = [
     key: "/import",
     icon: <UploadOutlined />,
     label: "导入文件",
+  },
+  {
+    key: "/import-tasks",
+    icon: <FileTextOutlined />,
+    label: "导入任务",
   },
   {
     key: "/orders",

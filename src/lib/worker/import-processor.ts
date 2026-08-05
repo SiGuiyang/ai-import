@@ -72,7 +72,7 @@ export async function processShardJob(
         .where(eq(parsingRules.id, task.ruleId));
       if (rule) {
         steps = (rule.steps as any[]) || [];
-        fieldMapping = rule.fieldMappings || null;
+        fieldMapping = rule.fieldMapping || null;
       }
     }
 
@@ -80,12 +80,7 @@ export async function processShardJob(
     const parseStart = performance.now();
     const rawBuffer = Buffer.from(task.fileData, "base64");
     const fileType = task.fileType || "xlsx";
-    // 转换为 ArrayBuffer（preprocessFile 需要）
-    const arrayBuffer = rawBuffer.buffer.slice(
-      rawBuffer.byteOffset,
-      rawBuffer.byteOffset + rawBuffer.byteLength
-    ) as ArrayBuffer;
-    const workbook = preprocessFile(arrayBuffer as any, fileType, task.fileName);
+    const workbook = await preprocessFile(rawBuffer, fileType, task.fileName);
 
     // 解析全部数据
     let allOrders: ParsedOrder[];

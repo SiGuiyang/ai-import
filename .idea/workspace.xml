@@ -4,14 +4,22 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="chore(config): 配置 Next.js 应用监控钩子和数据库初始化&#10;&#10;- 在 next.config.mjs 中启用 instrumentationHook 实验性功能&#10;- 添加 db:push 脚本到 package.json 用于数据库推送&#10;- 创建 src/instrumentation.ts 文件实现应用启动时数据库检查&#10;- 实现 src/lib/db/migrate.ts 数据库初始化功能&#10;- 配置数据库表自动创建和错误处理机制&#10;- 更新 IDE 工作区配置以反映最新的提交信息">
-      <change beforePath="$PROJECT_DIR$/.env.example" beforeDir="false" afterPath="$PROJECT_DIR$/.env.example" afterDir="false" />
+    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="fix(parser): 解决字段映射错误处理和SSE事件类型冲突问题&#10;&#10;- 在引擎层捕获字段映射异常并添加到错误列表中&#10;- 修复字段映射转换函数的可选链访问问题&#10;- 将SE错误事件重命名为parse-error以避免与原生error事件冲突&#10;- 添加SSE连接层错误处理机制&#10;- 实现应用层解析错误的完整错误处理流程">
+      <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/worker.ts" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/worker.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/import-tasks/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/import-tasks/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/orders/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/orders/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/import/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/import/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/orders/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/orders/page.tsx" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/components/layout/AppLayout.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/db/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/db/schema.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/ai/analyzer.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/ai/analyzer.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/parser/engine.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parser/engine.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/parser/extractors/standard-table.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parser/extractors/standard-table.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/parser/field-mapper.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parser/field-mapper.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/parser/preprocessor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parser/preprocessor.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/queue/redis.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/queue/redis.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/worker/import-processor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/worker/import-processor.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -299,42 +307,52 @@
       <option name="project" value="LOCAL" />
       <updated>1785830694161</updated>
     </task>
-    <option name="localTasksCounter" value="30" />
+    <task id="LOCAL-00030" summary="feat(app): 升级到异步事件驱动架构V4版本&#10;&#10;- 添加BullMQ队列和Redis配置支持异步处理&#10;- 新增导入任务、分片、错误明细等数据库表结构&#10;- 实现监控看板和Trace检索功能界面&#10;- 添加SKU主数据表和批量性能日志表&#10;- 集成出箱事件表支持可靠事件分发&#10;- 更新README文档说明新架构部署方式">
+      <option name="closed" value="true" />
+      <created>1785831939922</created>
+      <option name="number" value="00030" />
+      <option name="presentableId" value="LOCAL-00030" />
+      <option name="project" value="LOCAL" />
+      <updated>1785831939922</updated>
+    </task>
+    <task id="LOCAL-00031" summary="feat(db): 实现数据库表结构初始化功能&#10;&#10;- 替换 Drizzle Kit 方案为直接执行建表 SQL 语句&#10;- 添加解析规则、文件导入、订单、SKU 等核心业务表定义&#10;- 创建开放应用、导入任务、分片处理、错误明细等功能表&#10;- 设计事件出箱、性能日志、链路追踪等系统支撑表&#10;- 为关键字段建立数据库索引提升查询性能&#10;- 使用 Neon 数据库连接器支持服务端部署&#10;- 实现 CREATE IF NOT EXISTS 逻辑避免重复创建错误&#10;- 添加枚举类型定义和表结构同步注释说明">
+      <option name="closed" value="true" />
+      <created>1785889766704</created>
+      <option name="number" value="00031" />
+      <option name="presentableId" value="LOCAL-00031" />
+      <option name="project" value="LOCAL" />
+      <updated>1785889766704</updated>
+    </task>
+    <task id="LOCAL-00032" summary="refactor(apps): 优化页面组件中的异步函数处理&#10;&#10;- 在 apps 页面中将 fetchApps 函数包装为 useCallback 以避免不必要的重新渲染&#10;- 更新 useEffect 依赖数组，使用 fetchApps 作为依赖替代空数组&#10;- 在 import 预览页面中将 fetchData 函数包装为 useCallback 提升性能&#10;- 调整 useEffect 依赖关系，确保数据获取函数正确绑定到组件生命周期&#10;- 在导入进度页面中对 fetchTask 函数应用 useCallback 优化&#10;- 修正定时器中的函数引用，确保自动刷新功能正常工作">
+      <option name="closed" value="true" />
+      <created>1785890503939</created>
+      <option name="number" value="00032" />
+      <option name="presentableId" value="LOCAL-00032" />
+      <option name="project" value="LOCAL" />
+      <updated>1785890503939</updated>
+    </task>
+    <task id="LOCAL-00033" summary="refactor(db): 修改数据库迁移和导入预览页面的数据加载逻辑&#10;&#10;- 将数据库迁移中的sql查询改为unsafe模式以支持动态SQL执行&#10;- 重构导入预览页面的数据加载时机，将useEffect移至fetchData函数定义之后&#10;- 确保数据获取逻辑在组件挂载时正确执行">
+      <option name="closed" value="true" />
+      <created>1785890883006</created>
+      <option name="number" value="00033" />
+      <option name="presentableId" value="LOCAL-00033" />
+      <option name="project" value="LOCAL" />
+      <updated>1785890883006</updated>
+    </task>
+    <task id="LOCAL-00034" summary="fix(parser): 解决字段映射错误处理和SSE事件类型冲突问题&#10;&#10;- 在引擎层捕获字段映射异常并添加到错误列表中&#10;- 修复字段映射转换函数的可选链访问问题&#10;- 将SE错误事件重命名为parse-error以避免与原生error事件冲突&#10;- 添加SSE连接层错误处理机制&#10;- 实现应用层解析错误的完整错误处理流程">
+      <option name="closed" value="true" />
+      <created>1785892373485</created>
+      <option name="number" value="00034" />
+      <option name="presentableId" value="LOCAL-00034" />
+      <option name="project" value="LOCAL" />
+      <updated>1785892373485</updated>
+    </task>
+    <option name="localTasksCounter" value="35" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
-    <option name="OPEN_GENERIC_TABS">
-      <map>
-        <entry key="6a37f538-ccfe-41d3-97b0-396a9f4ccafa" value="TOOL_WINDOW" />
-      </map>
-    </option>
     <option name="TAB_STATES">
       <map>
-        <entry key="6a37f538-ccfe-41d3-97b0-396a9f4ccafa">
-          <value>
-            <State>
-              <option name="FILTERS">
-                <map>
-                  <entry key="branch">
-                    <value>
-                      <list>
-                        <option value="HEAD" />
-                      </list>
-                    </value>
-                  </entry>
-                  <entry key="roots">
-                    <value>
-                      <list>
-                        <option value="$PROJECT_DIR$" />
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
-              <option name="SHOW_ONLY_AFFECTED_CHANGES" value="true" />
-            </State>
-          </value>
-        </entry>
         <entry key="MAIN">
           <value>
             <State />
@@ -344,11 +362,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="refactor(rules): 将规则存储从本地存储迁移到API接口&#10;&#10;- 移除Ant Design Input组件依赖并更新导入&#10;- 为规则页面添加加载状态指示器&#10;- 将所有规则操作方法改为异步函数并适配API调用&#10;- 更新时间戳生成逻辑避免重复计算&#10;- 在表格中显示加载状态提升用户体验&#10;- 修复字段映射数渲染中的潜在空值错误&#10;- 迁移规则管理功能到后端API接口&#10;- 更新规则编辑器组件以支持异步保存操作" />
-    <MESSAGE value="feat(data-table): 增强数据表格组件功能&#10;&#10;- 添加温层、重量、件数等新字段支持&#10;- 实现单元格编辑功能，支持回车、Tab、方向键导航&#10;- 添加数据导出Excel功能&#10;- 集成数据库重复检测，实时显示重复状态&#10;- 优化错误提示和视觉反馈&#10;- 重构验证逻辑，提高性能和准确性&#10;- 添加批量删除和新增行功能&#10;- 改进样式和用户体验设计" />
-    <MESSAGE value="feat(api): 添加开放接口鉴权和运单查询功能&#10;&#10;- 在数据库初始化时创建 app_credentials 表用于存储应用凭证&#10;- 实现 HMAC-SHA256 签名验证机制，防止重放攻击&#10;- 添加 /api/open/credentials 接口用于管理应用凭证&#10;- 实现 /api/open/waybills/[waybillNo] 接口按运单号查询详情&#10;- 实现 /api/open/waybills 接口支持分页查询所有运单&#10;- 添加时间戳验证和应用状态检查机制&#10;- 支持模糊搜索和日期范围筛选功能" />
-    <MESSAGE value="功能" />
-    <MESSAGE value="feat(api): 添加运单异常状态管理功能&#10;&#10;- 在订单表中新增异常状态相关字段（exception_status, exception_reason, exception_time）&#10;- 创建运单异常状态索引以提升查询性能&#10;- 实现运单异常状态回写API接口，支持按运单号和SKU更新异常信息&#10;- 添加基于路径参数的运单SKU详情查询接口&#10;- 集成HMAC-SHA256鉴权机制" />
     <MESSAGE value="feat(db): 新增异步导入系统数据库表结构&#10;&#10;- 创建 sku_master 表用于 SKU 主数据存储&#10;- 创建 import_tasks 表用于管理导入任务状态&#10;- 创建 import_task_batches 表用于处理单元状态跟踪&#10;- 创建 import_task_errors 表用于记录行级错误明细&#10;- 创建 event_outbox 表用于事件驱动的消息队列&#10;- 创建 batch_performance_log 表用于性能监控日志&#10;- 创建 trace_events 表用于链路追踪时间线&#10;- 创建 import_task_raw_data 表用于存储原始导入数据&#10;- 为各表添加必要的索引以优化查询性能" />
     <MESSAGE value="refactor(worker): 优化工作器调度机制实现 Vercel Hobby 兼容&#10;&#10;- 将 Worker 模式从 Serverless Cron 改为上传完成后 fire-and-forget 触发 Dispatcher&#10;- 移除 Vercel Cron 配置，不再依赖定时任务触发分发器&#10;- 在上传 API 中添加异步 fetch 调用，上传完成时立即触发 Dispatcher&#10;- 更新架构文档描述新的触发机制和容量规划计算&#10;- 添加手动重试机制，当 fetch 触发失败时可通过 POST 接口重试&#10;- 优化分发器触发流程，满足 Vercel Hobby 计划限制要求" />
     <MESSAGE value="refactor(db): 调整数据库初始化中的索引创建异常处理&#10;&#10;- 将 CREATE INDEX 语句包装在独立的 try-catch 块中&#10;- 移除原有的注释忽略标记 /* ignore */&#10;- 统一异常处理方式为简洁的空 catch 块&#10;- 保持原有的索引创建逻辑不变" />
@@ -369,6 +382,11 @@
     <MESSAGE value="docs(spefication): 添加 AI 智能文件解析导入系统设计文档&#10;&#10;- 创建 .env.example 配置文件模板&#10;- 添加 .eslintrc.json 代码规范配置&#10;- 创建 .gitignore 忽略文件配置&#10;- 添加 900 行详细的 AI 智能文件解析导入系统设计文档&#10;- 包含 9 种文件格式兼容方案和系统架构设计&#10;- 定义解析规则引擎 DSL 和 6 种提取器详设&#10;- 规划页面设计和 API Routes 详设&#10;- 提供完整的实施计划和技术选型说明" />
     <MESSAGE value="feat(api): 添加开放应用管理和API鉴权功能&#10;&#10;- 在AppLayout中添加开放应用导航菜单项&#10;- 创建openApps数据库表和appStatus枚举类型&#10;- 实现HTTP签名验证工具和中间件&#10;- 添加应用管理页面支持创建、查询、更新、删除操作&#10;- 实现应用密钥重置和状态切换功能&#10;- 创建" />
     <MESSAGE value="chore(config): 配置 Next.js 应用监控钩子和数据库初始化&#10;&#10;- 在 next.config.mjs 中启用 instrumentationHook 实验性功能&#10;- 添加 db:push 脚本到 package.json 用于数据库推送&#10;- 创建 src/instrumentation.ts 文件实现应用启动时数据库检查&#10;- 实现 src/lib/db/migrate.ts 数据库初始化功能&#10;- 配置数据库表自动创建和错误处理机制&#10;- 更新 IDE 工作区配置以反映最新的提交信息" />
-    <option name="LAST_COMMIT_MESSAGE" value="chore(config): 配置 Next.js 应用监控钩子和数据库初始化&#10;&#10;- 在 next.config.mjs 中启用 instrumentationHook 实验性功能&#10;- 添加 db:push 脚本到 package.json 用于数据库推送&#10;- 创建 src/instrumentation.ts 文件实现应用启动时数据库检查&#10;- 实现 src/lib/db/migrate.ts 数据库初始化功能&#10;- 配置数据库表自动创建和错误处理机制&#10;- 更新 IDE 工作区配置以反映最新的提交信息" />
+    <MESSAGE value="feat(app): 升级到异步事件驱动架构V4版本&#10;&#10;- 添加BullMQ队列和Redis配置支持异步处理&#10;- 新增导入任务、分片、错误明细等数据库表结构&#10;- 实现监控看板和Trace检索功能界面&#10;- 添加SKU主数据表和批量性能日志表&#10;- 集成出箱事件表支持可靠事件分发&#10;- 更新README文档说明新架构部署方式" />
+    <MESSAGE value="feat(db): 实现数据库表结构初始化功能&#10;&#10;- 替换 Drizzle Kit 方案为直接执行建表 SQL 语句&#10;- 添加解析规则、文件导入、订单、SKU 等核心业务表定义&#10;- 创建开放应用、导入任务、分片处理、错误明细等功能表&#10;- 设计事件出箱、性能日志、链路追踪等系统支撑表&#10;- 为关键字段建立数据库索引提升查询性能&#10;- 使用 Neon 数据库连接器支持服务端部署&#10;- 实现 CREATE IF NOT EXISTS 逻辑避免重复创建错误&#10;- 添加枚举类型定义和表结构同步注释说明" />
+    <MESSAGE value="refactor(apps): 优化页面组件中的异步函数处理&#10;&#10;- 在 apps 页面中将 fetchApps 函数包装为 useCallback 以避免不必要的重新渲染&#10;- 更新 useEffect 依赖数组，使用 fetchApps 作为依赖替代空数组&#10;- 在 import 预览页面中将 fetchData 函数包装为 useCallback 提升性能&#10;- 调整 useEffect 依赖关系，确保数据获取函数正确绑定到组件生命周期&#10;- 在导入进度页面中对 fetchTask 函数应用 useCallback 优化&#10;- 修正定时器中的函数引用，确保自动刷新功能正常工作" />
+    <MESSAGE value="refactor(db): 修改数据库迁移和导入预览页面的数据加载逻辑&#10;&#10;- 将数据库迁移中的sql查询改为unsafe模式以支持动态SQL执行&#10;- 重构导入预览页面的数据加载时机，将useEffect移至fetchData函数定义之后&#10;- 确保数据获取逻辑在组件挂载时正确执行" />
+    <MESSAGE value="fix(parser): 解决字段映射错误处理和SSE事件类型冲突问题&#10;&#10;- 在引擎层捕获字段映射异常并添加到错误列表中&#10;- 修复字段映射转换函数的可选链访问问题&#10;- 将SE错误事件重命名为parse-error以避免与原生error事件冲突&#10;- 添加SSE连接层错误处理机制&#10;- 实现应用层解析错误的完整错误处理流程" />
+    <option name="LAST_COMMIT_MESSAGE" value="fix(parser): 解决字段映射错误处理和SSE事件类型冲突问题&#10;&#10;- 在引擎层捕获字段映射异常并添加到错误列表中&#10;- 修复字段映射转换函数的可选链访问问题&#10;- 将SE错误事件重命名为parse-error以避免与原生error事件冲突&#10;- 添加SSE连接层错误处理机制&#10;- 实现应用层解析错误的完整错误处理流程" />
   </component>
 </project>

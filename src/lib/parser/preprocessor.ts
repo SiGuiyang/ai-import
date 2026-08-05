@@ -4,10 +4,15 @@ import type { UnifiedWorkbook, UnifiedSheet, CellValue, TextParagraph } from "./
 
 // ============ Excel 预处理 ============
 export async function preprocessExcel(
-  buffer: ArrayBuffer,
+  buffer: ArrayBuffer | Uint8Array,
   fileName: string
 ): Promise<UnifiedWorkbook> {
-  const workbook = XLSX.read(buffer, { type: "array" });
+  // XLSX.read with type: "array" requires Uint8Array/Buffer (indexed access).
+  // A raw ArrayBuffer does NOT support indexed access: arrayBuffer[0] → undefined,
+  // which causes XLSX to read corrupted data and produce a workbook with
+  // undefined sheets, leading to "Cannot read properties of undefined (reading '0')".
+  const data = buffer instanceof ArrayBuffer ? new Uint8Array(buffer) : buffer;
+  const workbook = XLSX.read(data, { type: "array" });
   const sheets: UnifiedSheet[] = [];
 
   workbook.SheetNames.forEach((name) => {

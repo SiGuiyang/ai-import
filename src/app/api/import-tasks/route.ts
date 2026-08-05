@@ -104,7 +104,13 @@ export async function POST(request: NextRequest) {
     const taskId = task.id;
 
     // 创建分片记录
-    const shardValues: Record<string, any>[] = [];
+    const shardValues: Array<{
+      taskId: string;
+      shardIndex: number;
+      startRow: number;
+      endRow: number;
+      status: string;
+    }> = [];
     for (let i = 0; i < totalShards; i++) {
       const startRow = i * SHARD_SIZE + 1;
       const endRow = Math.min((i + 1) * SHARD_SIZE, totalRows);
@@ -132,6 +138,29 @@ export async function POST(request: NextRequest) {
       status: "pending",
     }));
     await db.insert(eventOutbox).values(outboxValues as any);
+
+    // 直接入队到 BullMQ（同时保留 outbox 事件作为可靠性保障）
+    try {
+      const { addShardJobs } = await import("@/lib/queue");
+      const shardJobParams: Array<{
+        taskId: string;
+        shardIndex: number;
+        startRow: number;
+        endRow: number;
+        traceId: string;
+      }> = shardValues.map((s) => ({
+        taskId,
+        shardIndex: s.shardIndex,
+        startRow: s.startRow,
+        endRow: s.endRow,
+        traceId,
+      }));
+      await addShardJobs(shardJobParams as any);
+      console.log(`[ImportTask] Enqueued ${shardJobParams.length} shard jobs for task ${taskId}`);
+    } catch (queueErr: any) {
+      // 入队失败不阻塞任务创建（可通过 outbox 调度器后续重试）
+      console.warn(`[ImportTask] Failed to enqueue shard jobs (will retry via outbox): ${queueErr.message}`);
+    }
 
     // 记录 Trace 事件
     addTraceEvent({

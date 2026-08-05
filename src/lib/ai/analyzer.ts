@@ -19,7 +19,7 @@ const SYSTEM_PROMPT = `你是一个物流出库单解析专家。你的任务是
 - dataStartRow: number (数据起始行号)
 - dataEndRow?: number (数据结束行号，不含结尾)
 - skipRows?: number[] (跳过的行号，如合计行)
-- columnMapping?: Record<string, string> (列名到目标字段的映射)
+- columnMapping?: Record<string, string> (原始列名→目标字段名 的映射，key=数据源中出现的列名，value=输出记录中的字段名)
 - ignoreColumns?: string[] (忽略的列名)
 - mergeCellStrategy?: "fill-down" | "skip" (合并单元格策略)
 
@@ -101,11 +101,11 @@ const SYSTEM_PROMPT = `你是一个物流出库单解析专家。你的任务是
     }
   ],
   "fieldMapping": {
-    "externalCode": { "stepId": "step-1", "fieldPath": "外部编码", "aiInferred": false, "aiConfidence": "high" },
-    "storeName": { "stepId": "step-2", "fieldPath": "收货门店", "aiInferred": false, "aiConfidence": "high" },
-    "skuCode": { "stepId": "step-1", "fieldPath": "SKU编码", "aiInferred": false, "aiConfidence": "high" },
-    "skuName": { "stepId": "step-1", "fieldPath": "SKU名称", "aiInferred": false, "aiConfidence": "high" },
-    "quantity": { "stepId": "step-1", "fieldPath": "发货数量", "aiInferred": false, "aiConfidence": "high" }
+    "externalCode": { "stepId": "step-1", "fieldPath": "externalCode", "aiInferred": false, "aiConfidence": "high" },
+    "storeName": { "stepId": "step-2", "fieldPath": "storeName", "aiInferred": false, "aiConfidence": "high" },
+    "skuCode": { "stepId": "step-1", "fieldPath": "skuCode", "aiInferred": false, "aiConfidence": "high" },
+    "skuName": { "stepId": "step-1", "fieldPath": "skuName", "aiInferred": false, "aiConfidence": "high" },
+    "quantity": { "stepId": "step-1", "fieldPath": "quantity", "aiInferred": false, "aiConfidence": "high" }
   },
   "confidence": {
     "overall": "high|medium|low",
@@ -118,7 +118,8 @@ const SYSTEM_PROMPT = `你是一个物流出库单解析专家。你的任务是
 - 如果文件名是 xlsx/xls/docx/pdf，文件内容可能是原始文本而不是表格
 - 对于不确切的映射，confidence 标记为 "medium" 或 "low"，aiInferred 设为 true
 - 必须把所有可能的字段映射都标注出来
-- 列名映射时使用数据源中实际出现的列名（区分大小写），不要翻译或猜测`;
+- 列名映射时使用数据源中实际出现的列名（区分大小写），不要翻译或猜测
+- fieldPath 应填写步骤输出记录中的实际 key：若步骤有 columnMapping，使用目标字段名（如 "externalCode"）；若无 columnMapping，使用原始列名`;
 
 export async function analyzeFileStructure(
   fileContent: string,
