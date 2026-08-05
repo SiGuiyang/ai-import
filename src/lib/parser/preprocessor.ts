@@ -65,10 +65,13 @@ export async function preprocessExcel(
 
 // ============ Word 预处理 ============
 export async function preprocessWord(
-  buffer: ArrayBuffer,
+  buffer: ArrayBuffer | Uint8Array,
   fileName: string
 ): Promise<UnifiedWorkbook> {
-  const result = await mammoth.extractRawText({ buffer: Buffer.from(buffer) });
+  const buf = buffer instanceof ArrayBuffer
+    ? Buffer.from(buffer)
+    : Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  const result = await mammoth.extractRawText({ buffer: buf });
   const text = result.value;
 
   // 按段落拆分
@@ -97,13 +100,14 @@ export async function preprocessWord(
 
 // ============ PDF 预处理 ============
 export async function preprocessPdf(
-  buffer: ArrayBuffer,
+  buffer: ArrayBuffer | Uint8Array,
   fileName: string
 ): Promise<UnifiedWorkbook> {
   // 动态导入 pdf-parse 以避免 SSR 问题
   const pdfModule = await import("pdf-parse");
   const pdfParse = (pdfModule as any).default || pdfModule;
-  const data = await pdfParse(Buffer.from(buffer));
+  const dataBuffer = buffer instanceof ArrayBuffer ? Buffer.from(buffer) : Buffer.from(buffer.buffer, buffer.byteOffset, buffer.byteLength);
+  const data = await pdfParse(dataBuffer);
   const fullText = data.text;
 
   // 按页拆分
@@ -135,7 +139,7 @@ export async function preprocessPdf(
 
 // ============ 统一入口 ============
 export async function preprocessFile(
-  buffer: ArrayBuffer,
+  buffer: ArrayBuffer | Uint8Array,
   fileType: string,
   fileName: string
 ): Promise<UnifiedWorkbook> {

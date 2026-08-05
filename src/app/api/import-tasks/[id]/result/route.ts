@@ -8,7 +8,7 @@ import {
   orders,
   orderItems,
 } from "@/lib/db/schema";
-import { eq, inArray, sql } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 
 export async function GET(
   _req: NextRequest,
@@ -83,7 +83,7 @@ export async function GET(
       .limit(500); // 限制返回数量，分页再加载
 
     // 查询订单的 items（批量）
-    let itemsMap: Record<string, any[]> = {};
+    const itemsMap: Record<string, any[]> = {};
     if (taskOrders.length > 0) {
       const orderIds = taskOrders.map((o) => o.id);
       const allItems = await db

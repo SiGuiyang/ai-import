@@ -92,7 +92,7 @@ export default function ImportTasksPage() {
 
   useEffect(() => {
     fetchTasks(1);
-  }, [statusFilter]);
+  }, [statusFilter, fetchTasks]);
 
   const handleViewProgress = (taskId: string) => {
     router.push(`/import/${taskId}/progress`);

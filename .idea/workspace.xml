@@ -4,13 +4,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="fix(parser): 解决字段映射错误处理和多工作表支持问题&#10;&#10;- 修复字段映射时使用错误的列名映射格式导致的数据解析问题&#10;- 添加对Excel多工作表的支持，通过sheetIndex/sheetName切换当前工作表&#10;- 改进字段映射回退机制，当fieldPath找不到值时使用mapping key作为记录key&#10;- 修复预处理器中ArrayBuffer到Uint8Array的转换问题避免数据损坏&#10;- 优化合并数据逻辑防止因长度不匹配导致的数据截断问题&#10;- 增强工作表有效性检查防止解析空数据引发异常&#10;- 修复AI分析器中的fieldPath映射错误确保正确的目标字段名使用&#10;- 完善Redis连接错误处理和重试机制提高队列稳定性">
+    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="feat(api): 添加导入任务错误查询接口&#10;&#10;- 实现 GET /api/import-tasks/:id/errors 接口用于查询行级错误明细&#10;- 支持分页查询，包含页码和每页大小参数&#10;- 支持按分片索引和错误代码过滤条件&#10;- 返回错误列表及总数统计信息&#10;- 集成数据库查询逻辑，使用 drizzle-orm 进行数据操作&#10;- 添加错误处理机制，捕获查询异常并返回相应错误信息">
       <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/import-tasks/[id]/errors/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/import-tasks/[id]/errors/route.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/import-tasks/[taskId]/errors/route.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/import-tasks/[taskId]/route.ts" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/app/api/import-tasks/[taskId]/shards/route.ts" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/import-tasks/[id]/result/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/import-tasks/[id]/result/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/api/import-tasks/[id]/shards/route.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/api/import-tasks/[id]/shards/route.ts" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/import-tasks/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/import-tasks/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/import/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/import/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/orders/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/orders/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/app/rules/[id]/edit/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/src/app/rules/[id]/edit/page.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/lib/parser/preprocessor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/parser/preprocessor.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -346,7 +348,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785898876675</updated>
     </task>
-    <option name="localTasksCounter" value="36" />
+    <task id="LOCAL-00036" summary="feat(api): 添加导入任务错误查询接口&#10;&#10;- 实现 GET /api/import-tasks/:id/errors 接口用于查询行级错误明细&#10;- 支持分页查询，包含页码和每页大小参数&#10;- 支持按分片索引和错误代码过滤条件&#10;- 返回错误列表及总数统计信息&#10;- 集成数据库查询逻辑，使用 drizzle-orm 进行数据操作&#10;- 添加错误处理机制，捕获查询异常并返回相应错误信息">
+      <option name="closed" value="true" />
+      <created>1785899738523</created>
+      <option name="number" value="00036" />
+      <option name="presentableId" value="LOCAL-00036" />
+      <option name="project" value="LOCAL" />
+      <updated>1785899738523</updated>
+    </task>
+    <option name="localTasksCounter" value="37" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -361,7 +371,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="refactor(worker): 优化工作器调度机制实现 Vercel Hobby 兼容&#10;&#10;- 将 Worker 模式从 Serverless Cron 改为上传完成后 fire-and-forget 触发 Dispatcher&#10;- 移除 Vercel Cron 配置，不再依赖定时任务触发分发器&#10;- 在上传 API 中添加异步 fetch 调用，上传完成时立即触发 Dispatcher&#10;- 更新架构文档描述新的触发机制和容量规划计算&#10;- 添加手动重试机制，当 fetch 触发失败时可通过 POST 接口重试&#10;- 优化分发器触发流程，满足 Vercel Hobby 计划限制要求" />
     <MESSAGE value="refactor(db): 调整数据库初始化中的索引创建异常处理&#10;&#10;- 将 CREATE INDEX 语句包装在独立的 try-catch 块中&#10;- 移除原有的注释忽略标记 /* ignore */&#10;- 统一异常处理方式为简洁的空 catch 块&#10;- 保持原有的索引创建逻辑不变" />
     <MESSAGE value="feat(import): 完善文件导入系统架构与功能&#10;&#10;- 添加文件去重策略，使用 SHA-256 哈希算法和 24 小时窗口&#10;- 实现上传防重复点击，使用 useRef 和状态锁双重保护&#10;- 设计事务原子性保证，所有数据库操作在单个事务中完成&#10;- 构建完整的 Outbox 可靠性保证机制，包括状态生命周期管理&#10;- 实现 Worker 异步处理流程，支持 V2 规则映射和跨行聚合&#10;- 添加四层幂等保护机制，确保重复处理的安全性&#10;- 建立精细化错误记录体系，支持错误码分类和修复建议&#10;- 实现复合业务键 UPSERT，避免重复数据写入&#10;- 优化数据库表结构，增加 content_hash 和版本控制字段&#10;- 集成 Upstash Redis 用于缓存和分布式锁功能&#10;- 完善前端任务详情页面，支持错误筛选和详细信息展示&#10;- 重构 API 响应格式，统一数据结构和错误处理机制" />
     <MESSAGE value="config(redis): 更新 Upstash Redis 环境变量名称&#10;&#10;- 将环境变量名从 UPSTASH_REDIS_URL 和 UPSTASH_REDIS_TOKEN &#10;  更改为 UPSTASH_REDIS_KV_REST_API_URL 和 UPSTASH_REDIS_KV_REST_API_TOKEN&#10;- 更新控制台警告消息中的环境变量名称&#10;- 保持 Redis 客户端初始化逻辑不变" />
@@ -386,6 +395,7 @@
     <MESSAGE value="refactor(db): 修改数据库迁移和导入预览页面的数据加载逻辑&#10;&#10;- 将数据库迁移中的sql查询改为unsafe模式以支持动态SQL执行&#10;- 重构导入预览页面的数据加载时机，将useEffect移至fetchData函数定义之后&#10;- 确保数据获取逻辑在组件挂载时正确执行" />
     <MESSAGE value="fix(parser): 解决字段映射错误处理和SSE事件类型冲突问题&#10;&#10;- 在引擎层捕获字段映射异常并添加到错误列表中&#10;- 修复字段映射转换函数的可选链访问问题&#10;- 将SE错误事件重命名为parse-error以避免与原生error事件冲突&#10;- 添加SSE连接层错误处理机制&#10;- 实现应用层解析错误的完整错误处理流程" />
     <MESSAGE value="fix(parser): 解决字段映射错误处理和多工作表支持问题&#10;&#10;- 修复字段映射时使用错误的列名映射格式导致的数据解析问题&#10;- 添加对Excel多工作表的支持，通过sheetIndex/sheetName切换当前工作表&#10;- 改进字段映射回退机制，当fieldPath找不到值时使用mapping key作为记录key&#10;- 修复预处理器中ArrayBuffer到Uint8Array的转换问题避免数据损坏&#10;- 优化合并数据逻辑防止因长度不匹配导致的数据截断问题&#10;- 增强工作表有效性检查防止解析空数据引发异常&#10;- 修复AI分析器中的fieldPath映射错误确保正确的目标字段名使用&#10;- 完善Redis连接错误处理和重试机制提高队列稳定性" />
-    <option name="LAST_COMMIT_MESSAGE" value="fix(parser): 解决字段映射错误处理和多工作表支持问题&#10;&#10;- 修复字段映射时使用错误的列名映射格式导致的数据解析问题&#10;- 添加对Excel多工作表的支持，通过sheetIndex/sheetName切换当前工作表&#10;- 改进字段映射回退机制，当fieldPath找不到值时使用mapping key作为记录key&#10;- 修复预处理器中ArrayBuffer到Uint8Array的转换问题避免数据损坏&#10;- 优化合并数据逻辑防止因长度不匹配导致的数据截断问题&#10;- 增强工作表有效性检查防止解析空数据引发异常&#10;- 修复AI分析器中的fieldPath映射错误确保正确的目标字段名使用&#10;- 完善Redis连接错误处理和重试机制提高队列稳定性" />
+    <MESSAGE value="feat(api): 添加导入任务错误查询接口&#10;&#10;- 实现 GET /api/import-tasks/:id/errors 接口用于查询行级错误明细&#10;- 支持分页查询，包含页码和每页大小参数&#10;- 支持按分片索引和错误代码过滤条件&#10;- 返回错误列表及总数统计信息&#10;- 集成数据库查询逻辑，使用 drizzle-orm 进行数据操作&#10;- 添加错误处理机制，捕获查询异常并返回相应错误信息" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(api): 添加导入任务错误查询接口&#10;&#10;- 实现 GET /api/import-tasks/:id/errors 接口用于查询行级错误明细&#10;- 支持分页查询，包含页码和每页大小参数&#10;- 支持按分片索引和错误代码过滤条件&#10;- 返回错误列表及总数统计信息&#10;- 集成数据库查询逻辑，使用 drizzle-orm 进行数据操作&#10;- 添加错误处理机制，捕获查询异常并返回相应错误信息" />
   </component>
 </project>

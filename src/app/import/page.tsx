@@ -9,7 +9,6 @@ import {
   Space,
   Typography,
   message,
-  Progress,
   Empty,
 } from "antd";
 import {
@@ -37,8 +36,6 @@ export default function ImportPage() {
   const [rules, setRules] = useState<RuleOption[]>([]);
   const [selectedRule, setSelectedRule] = useState<string | null>(null);
   const [parsing, setParsing] = useState(false);
-  const [progress, setProgress] = useState(0);
-  const [progressMessage, setProgressMessage] = useState("");
   const [parseError, setParseError] = useState<string | null>(null);
 
   // 获取规则列表
@@ -185,8 +182,6 @@ export default function ImportPage() {
       {parsing && (
         <Card style={{ borderRadius: 12, marginBottom: 16 }}>
           <Title level={5}>正在创建任务...</Title>
-          <Progress percent={progress} status="active" />
-          <Text type="secondary">{progressMessage}</Text>
         </Card>
       )}
 

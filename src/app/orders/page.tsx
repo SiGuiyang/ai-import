@@ -101,7 +101,7 @@ export default function OrdersPage() {
 
   useEffect(() => {
     fetchOrders(1);
-  }, [search, dateRange]);
+  }, [search, dateRange, fetchOrders]);
 
   // 点击查询
   const handleSearch = () => {
