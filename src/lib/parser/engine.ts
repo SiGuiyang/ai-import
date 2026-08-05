@@ -133,7 +133,13 @@ export async function parseFileWithRule(
   const intermediate = await parseFile(workbook, steps, onProgress);
 
   if (fieldMapping && intermediate.orders.length > 0) {
-    const orders = applyFieldMapping(intermediate.orders, fieldMapping);
+    let orders: ParsedOrder[];
+    try {
+      orders = applyFieldMapping(intermediate.orders, fieldMapping);
+    } catch (err: any) {
+      intermediate.errors.push(`字段映射失败: ${err.message}`);
+      return { ...intermediate, errors: intermediate.errors };
+    }
     return {
       ...intermediate,
       orders: orders as any,

@@ -82,16 +82,16 @@ export function applyFieldMapping(
       items: groupRecords.map((record, idx): ParsedOrderItem => ({
         skuCode: applyTransform(
           getValue(record, fieldMapping.skuCode),
-          fieldMapping.skuCode.transform
+          fieldMapping.skuCode?.transform
         ) || "",
         skuName: applyTransform(
           getValue(record, fieldMapping.skuName),
-          fieldMapping.skuName.transform
+          fieldMapping.skuName?.transform
         ) || "",
         quantity: Number(
           applyTransform(
             getValue(record, fieldMapping.quantity),
-            fieldMapping.quantity.transform
+            fieldMapping.quantity?.transform
           ) || 0
         ),
         specification: applyTransform(

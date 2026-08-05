@@ -18,7 +18,12 @@ export async function GET(
   const stream = new ReadableStream({
     async start(controller) {
       const send = (data: any) => {
-        controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`));
+        // 提取 type 作为 SSE event: 字段，避免与原生 error 事件冲突
+        const eventType = data?.type || "message";
+        const sseEventType = eventType === "error" ? "parse-error" : eventType;
+        controller.enqueue(
+          encoder.encode(`event: ${sseEventType}\ndata: ${JSON.stringify(data)}\n\n`)
+        );
       };
 
       try {

@@ -132,13 +132,20 @@ export default function ImportPage() {
         router.push(`/import/${importId}/preview`);
       });
 
-      eventSource.addEventListener("error", (event: Event) => {
-        const data = JSON.parse((event as MessageEvent).data || "{}");
+      // 应用层解析错误（event: parse-error）
+      eventSource.addEventListener("parse-error", (event: MessageEvent) => {
+        const data = JSON.parse(event.data || "{}");
         eventSource.close();
         setParsing(false);
         setParseError(data.message || "解析失败");
         message.error(data.message || "解析失败");
       });
+
+      // 连接层错误（SSE 连接关闭/异常）
+      eventSource.onerror = () => {
+        eventSource.close();
+        setParsing(false);
+      };
     } catch {
       setParsing(false);
       setParseError("解析启动失败");
