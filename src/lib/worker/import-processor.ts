@@ -14,7 +14,6 @@ import { addTraceEvent } from "@/lib/trace";
 import { preprocessFile } from "@/lib/parser/preprocessor";
 import { parseFileWithRule } from "@/lib/parser/engine";
 import {
-  isSkuValidationTimeout,
   buildDegradationMessage,
 } from "./degradation";
 import type { ImportShardJobData } from "@/lib/queue";
@@ -141,85 +140,73 @@ export async function processShardJob(
         // 去重
         const uniqueSkus = [...new Set(skuCodes)];
 
-        // 批量查询 sku_master（设置 3s 超时）
-        const queryPromise = db
-          .select({ skuCode: skuMaster.skuCode })
-          .from(skuMaster)
-          .where(inArray(skuMaster.skuCode, uniqueSkus));
+        // 无 SKU 则跳过校验
+        const validSkuSet = new Set<string>();
+        if (uniqueSkus.length > 0) {
+          const SKU_QUERY_TIMEOUT = 3000;
 
-        // 超时检查
-        if (isSkuValidationTimeout(validateStart)) {
-          throw new Error("SKU query timeout");
+          // 使用 Promise.race 实现真正的超时中断
+          const queryPromise = db
+            .select({ skuCode: skuMaster.skuCode })
+            .from(skuMaster)
+            .where(inArray(skuMaster.skuCode, uniqueSkus));
+
+          const timeoutPromise = new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error("SKU query timeout")), SKU_QUERY_TIMEOUT)
+          );
+
+          const validSkus = await Promise.race([
+            queryPromise.then((rows) => rows),
+            timeoutPromise,
+          ]);
+
+          for (const s of validSkus) {
+            validSkuSet.add(s.skuCode);
+          }
         }
 
-        const validSkus = await queryPromise;
-        const elapsed = performance.now() - validateStart;
+        validateDuration = performance.now() - validateStart;
 
-        if (elapsed >= 3000) {
-          // 超时降级
-          degraded = true;
-          const msg = buildDegradationMessage("sku_query_timeout");
+        // 校验每个 SKU
+        const errors: any[] = [];
+        for (const order of shardOrders) {
+          if (order.items) {
+            for (const item of order.items) {
+              if (item.skuCode && validSkuSet.size > 0 && !validSkuSet.has(item.skuCode)) {
+                errors.push({
+                  taskId,
+                  shardIndex,
+                  rowNumber: startRow,
+                  fieldName: "sku_code",
+                  rawValue: item.skuCode,
+                  errorCode: "SKU_NOT_FOUND",
+                  errorReason: `SKU "${item.skuCode}" not found in master data`,
+                  traceId,
+                });
+              }
+            }
+          }
+        }
+
+        // 写入错误
+        if (errors.length > 0) {
+          await db.insert(importTaskErrors).values(errors as any);
           addTraceEvent({
             traceId,
             taskId,
             shardIndex,
-            eventName: "SKU_VALIDATION_DEGRADED",
-            eventStatus: "degraded",
-            message: msg,
+            eventName: "SKU_VALIDATION_ERRORS",
+            eventStatus: "error",
+            message: `${errors.length} SKU not found errors`,
+            metadata: { errorCount: errors.length },
           });
-
-          // 更新任务降级标记
-          await db
-            .update(importTasks)
-            .set({ degraded: true } as any)
-            .where(eq(importTasks.id, taskId as any));
-
-          console.warn(`[Worker] Task ${taskId} degraded: ${msg}`);
-        }
-
-        const validSkuSet = new Set(validSkus.map((s) => s.skuCode));
-        validateDuration = performance.now() - validateStart;
-
-        // 校验每个 SKU
-        if (!degraded) {
-          const errors: any[] = [];
-          for (const order of shardOrders) {
-            if (order.items) {
-              for (const item of order.items) {
-                if (item.skuCode && !validSkuSet.has(item.skuCode)) {
-                  errors.push({
-                    taskId,
-                    shardIndex,
-                    rowNumber: startRow,
-                    fieldName: "sku_code",
-                    rawValue: item.skuCode,
-                    errorCode: "SKU_NOT_FOUND",
-                    errorReason: `SKU "${item.skuCode}" not found in master data`,
-                    traceId,
-                  });
-                }
-              }
-            }
-          }
-
-          // 写入错误
-          if (errors.length > 0) {
-            await db.insert(importTaskErrors).values(errors as any);
-            addTraceEvent({
-              traceId,
-              taskId,
-              shardIndex,
-              eventName: "SKU_VALIDATION_ERRORS",
-              eventStatus: "error",
-              message: `${errors.length} SKU not found errors`,
-              metadata: { errorCount: errors.length },
-            });
-          }
         }
       } catch (skuErr: any) {
-        // SKU 查询异常 → 降级
+        // SKU 查询超时或异常 → 降级
         degraded = true;
-        const msg = buildDegradationMessage("sku_query_error");
+        const reason: "sku_query_timeout" | "sku_query_error" =
+          skuErr.message === "SKU query timeout" ? "sku_query_timeout" : "sku_query_error";
+        const msg = buildDegradationMessage(reason);
         addTraceEvent({
           traceId,
           taskId,
@@ -232,6 +219,7 @@ export async function processShardJob(
           .update(importTasks)
           .set({ degraded: true } as any)
           .where(eq(importTasks.id, taskId as any));
+        console.warn(`[Worker] Task ${taskId} shard ${shardIndex} degraded: ${msg}`);
       }
     }
 
