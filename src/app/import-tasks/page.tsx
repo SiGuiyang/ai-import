@@ -12,7 +12,7 @@ import {
   message,
   Space,
 } from "antd";
-import { EyeOutlined, ReloadOutlined, CopyOutlined } from "@ant-design/icons";
+import { EyeOutlined, ReloadOutlined, CopyOutlined, AimOutlined } from "@ant-design/icons";
 import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 
@@ -61,6 +61,11 @@ export default function ImportTasksPage() {
   const [detailModalOpen, setDetailModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<ImportTask | null>(null);
 
+  // Trace 弹窗状态
+  const [traceModalOpen, setTraceModalOpen] = useState(false);
+  const [traceData, setTraceData] = useState<any>(null);
+  const [traceLoading, setTraceLoading] = useState(false);
+
   const fetchTasks = useCallback(
     async (page = 1, pageSize = pagination.pageSize, status = statusFilter) => {
       setLoading(true);
@@ -101,6 +106,27 @@ export default function ImportTasksPage() {
   const handleViewDetail = (task: ImportTask) => {
     setSelectedTask(task);
     setDetailModalOpen(true);
+  };
+
+  const handleViewTrace = async (task: ImportTask) => {
+    setSelectedTask(task);
+    setTraceModalOpen(true);
+    setTraceLoading(true);
+    setTraceData(null);
+    try {
+      const taskId = task.id;
+      const res = await fetch(`/api/traces/${taskId}?type=task`, { cache: "no-store" });
+      if (res.ok) {
+        const data = await res.json();
+        setTraceData(data);
+      } else {
+        message.error("获取 Trace 数据失败");
+      }
+    } catch {
+      message.error("获取 Trace 数据失败");
+    } finally {
+      setTraceLoading(false);
+    }
   };
 
   const formatTime = (text: string | null) =>
@@ -241,7 +267,7 @@ export default function ImportTasksPage() {
     {
       title: "操作",
       key: "actions",
-      width: 160,
+      width: 220,
       fixed: "right" as const,
       render: (_: any, record: ImportTask) => (
         <Space size="small">
@@ -259,6 +285,14 @@ export default function ImportTasksPage() {
             onClick={() => handleViewProgress(record.id)}
           >
             进度
+          </Button>
+          <Button
+            type="link"
+            size="small"
+            icon={<AimOutlined />}
+            onClick={() => handleViewTrace(record)}
+          >
+            Trace
           </Button>
         </Space>
       ),
@@ -319,7 +353,7 @@ export default function ImportTasksPage() {
           showTotal: (total) => `共 ${total} 条`,
           onChange: (page, pageSize) => fetchTasks(page, pageSize),
         }}
-        scroll={{ x: 1580 }}
+        scroll={{ x: 1640 }}
         locale={{ emptyText: "暂无导入任务" }}
       />
 
@@ -393,6 +427,149 @@ export default function ImportTasksPage() {
               </Descriptions.Item>
             )}
           </Descriptions>
+        )}
+      </Modal>
+
+      {/* Trace 检索明细弹窗 */}
+      <Modal
+        title={
+          <Space>
+            <AimOutlined />
+            <span>Trace 检索明细</span>
+            {selectedTask && (
+              <Tag style={{ marginLeft: 8 }}>{selectedTask.fileName}</Tag>
+            )}
+          </Space>
+        }
+        open={traceModalOpen}
+        onCancel={() => {
+          setTraceModalOpen(false);
+          setTraceData(null);
+        }}
+        footer={null}
+        width={800}
+        loading={traceLoading}
+      >
+        {selectedTask && (
+          <div style={{ marginBottom: 16 }}>
+            <Descriptions size="small" column={2} bordered>
+              <Descriptions.Item label="Task ID">
+                <span style={{ fontFamily: "monospace", fontSize: 12 }}>{selectedTask.id}</span>
+              </Descriptions.Item>
+              <Descriptions.Item label="Trace ID">
+                <span style={{ fontFamily: "monospace", fontSize: 12 }}>
+                  {traceData?.traceId || selectedTask.traceId || "-"}
+                </span>
+              </Descriptions.Item>
+              <Descriptions.Item label="事件总数">
+                {traceData?.eventCount ?? "-"}
+              </Descriptions.Item>
+              <Descriptions.Item label="任务状态">
+                <Tag color={statusMap[selectedTask.status]?.color}>
+                  {statusMap[selectedTask.status]?.label}
+                </Tag>
+              </Descriptions.Item>
+            </Descriptions>
+          </div>
+        )}
+
+        {traceLoading ? (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#999" }}>
+            加载中...
+          </div>
+        ) : traceData && traceData.events?.length > 0 ? (
+          <div style={{ maxHeight: 480, overflow: "auto" }}>
+            {traceData.events.map((evt: any, idx: number) => {
+              const statusColor =
+                evt.eventStatus === "error" ? "#ff4d4f" :
+                evt.eventStatus === "warn" ? "#faad14" :
+                "#52c41a";
+              return (
+                <div
+                  key={evt.id || idx}
+                  style={{
+                    display: "flex",
+                    padding: "10px 0",
+                    borderBottom: "1px solid #f0f0f0",
+                    alignItems: "flex-start",
+                    gap: 12,
+                  }}
+                >
+                  {/* 左侧时间线圆点 */}
+                  <div style={{ flexShrink: 0, textAlign: "center", width: 12 }}>
+                    <div
+                      style={{
+                        width: 10,
+                        height: 10,
+                        borderRadius: "50%",
+                        background: statusColor,
+                        marginTop: 4,
+                      }}
+                    />
+                    {idx < traceData.events.length - 1 && (
+                      <div
+                        style={{
+                          width: 2,
+                          height: "100%",
+                          background: "#e8e8e8",
+                          margin: "4px auto 0",
+                          minHeight: 20,
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  {/* 右侧内容 */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                      <Tag
+                        color={statusColor}
+                        style={{ fontSize: 12, marginRight: 0 }}
+                      >
+                        {evt.eventName}
+                      </Tag>
+                      <span style={{ fontSize: 12, color: "#999" }}>
+                        {formatTime(evt.occurredAt)}
+                      </span>
+                    </div>
+                    <div style={{ marginTop: 4, fontSize: 13, color: "#333" }}>
+                      {evt.message || "-"}
+                    </div>
+                    {evt.metadata && (
+                      <div
+                        style={{
+                          marginTop: 6,
+                          padding: "6px 10px",
+                          background: "#fafafa",
+                          borderRadius: 6,
+                          fontSize: 12,
+                          fontFamily: "monospace",
+                          color: "#595959",
+                          whiteSpace: "pre-wrap",
+                          wordBreak: "break-all",
+                          maxHeight: 120,
+                          overflow: "auto",
+                        }}
+                      >
+                        {typeof evt.metadata === "string"
+                          ? evt.metadata
+                          : JSON.stringify(evt.metadata, null, 2)}
+                      </div>
+                    )}
+                    {evt.shardIndex !== null && evt.shardIndex !== undefined && (
+                      <Tag style={{ marginTop: 4, fontSize: 11, color: "#8c8c8c" }}>
+                        Shard #{evt.shardIndex}
+                      </Tag>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        ) : (
+          <div style={{ textAlign: "center", padding: "40px 0", color: "#999" }}>
+            {traceData ? "暂无 Trace 事件" : "无法加载 Trace 数据"}
+          </div>
         )}
       </Modal>
     </div>

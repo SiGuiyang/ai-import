@@ -6,8 +6,8 @@ import AppLayout from "@/components/layout/AppLayout";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "AI 智能导入系统",
-  description: "物流出库单智能解析与批量下单系统",
+  title: "鲸天 AI 智能导入系统",
+  description: "鲸天 AI 智能导入系统",
 };
 
 const theme = {

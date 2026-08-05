@@ -98,7 +98,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
               whiteSpace: "nowrap",
             }}
           >
-            {collapsed ? "AI" : "AI 智能导入"}
+            {collapsed ? "AI" : "鲸天 AI 智能导入"}
           </Title>
         </div>
         <Menu
@@ -121,7 +121,7 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
           }}
         >
           <Title level={5} style={{ margin: 0, color: "#555" }}>
-            物流出库单智能解析与批量下单系统
+            鲸天 AI 智能导入系统
           </Title>
         </Header>
         <Content

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Card, Row, Col, Statistic, Typography } from "antd";
 import {
   UploadOutlined,
@@ -41,12 +41,20 @@ const actionCards = [
 
 export default function HomePage() {
   const router = useRouter();
+  const [stats, setStats] = useState({ todayImportCount: 0, rulesCount: 0, ordersCount: 0 });
+
+  useEffect(() => {
+    fetch("/api/dashboard/stats", { cache: "no-store" })
+      .then((res) => res.ok ? res.json() : null)
+      .then((data) => data && setStats(data))
+      .catch(() => {});
+  }, []);
 
   return (
     <div>
       <div style={{ marginBottom: 32 }}>
         <Title level={3} style={{ marginBottom: 8 }}>
-          欢迎使用 AI 智能导入系统
+          欢迎使用鲸天 AI 智能导入系统
         </Title>
         <Paragraph type="secondary" style={{ fontSize: 15 }}>
           通过大模型智能解析任意格式的出库单文件，实现批量下单流程自动化
@@ -103,7 +111,7 @@ export default function HomePage() {
           <Card style={{ borderRadius: 12 }}>
             <Statistic
               title="今日导入"
-              value={0}
+              value={stats.todayImportCount}
               prefix={<FileTextOutlined />}
               valueStyle={{ color: "#0fc6c2" }}
             />
@@ -113,7 +121,7 @@ export default function HomePage() {
           <Card style={{ borderRadius: 12 }}>
             <Statistic
               title="解析规则数"
-              value={0}
+              value={stats.rulesCount}
               prefix={<SettingOutlined />}
               valueStyle={{ color: "#0fc6c2" }}
             />
@@ -123,7 +131,7 @@ export default function HomePage() {
           <Card style={{ borderRadius: 12 }}>
             <Statistic
               title="总运单数"
-              value={0}
+              value={stats.ordersCount}
               prefix={<OrderedListOutlined />}
               valueStyle={{ color: "#0fc6c2" }}
             />
