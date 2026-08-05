@@ -4,12 +4,8 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="refactor(worker): 优化SKU验证超时处理机制&#10;&#10;- 移除过时的isSkuValidationTimeout函数&#10;- 实现Promise.race超时控制机制替代简单的性能检测&#10;- 添加SKU查询超时时的降级处理逻辑&#10;- 优化空SKU集的处理跳过验证步骤&#10;- 添加任务降级时的详细日志输出&#10;- 统一SKU查询异常和超时的错误处理路径">
+    <list default="true" id="8ed3a87c-226a-4732-83f8-f9ea95225604" name="Changes" comment="feat(import): 优化导入任务处理机制和监控功能&#10;&#10;- 在 outbox dispatcher 中添加 errorMessage 字段记录错误详情&#10;- 实现导入处理器中逐行写入订单功能，单条失败不阻断整体流程&#10;- 添加导入任务的成功和失败行数统计功能&#10;- 优化前端页面数据获取，添加缓存破除机制确保实时更新&#10;- 在监控页面添加任务统计概览和最近任务列表展示&#10;- 实现在订单页面添加提交功能，支持草稿状态订单提交操作&#10;- 添加 API 接口支持订单状态更新和任务进度统计信息&#10;- 优化数据库表结构，在 event_outbox 表添加错误消息存储字段">
       <change afterPath="$PROJECT_DIR$/.env" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/db/schema.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/db/schema.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/outbox/dispatcher.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/outbox/dispatcher.ts" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/lib/worker/import-processor.ts" beforeDir="false" afterPath="$PROJECT_DIR$/src/lib/worker/import-processor.ts" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -369,7 +365,15 @@
       <option name="project" value="LOCAL" />
       <updated>1785902658266</updated>
     </task>
-    <option name="localTasksCounter" value="39" />
+    <task id="LOCAL-00039" summary="feat(import): 优化导入任务处理机制和监控功能&#10;&#10;- 在 outbox dispatcher 中添加 errorMessage 字段记录错误详情&#10;- 实现导入处理器中逐行写入订单功能，单条失败不阻断整体流程&#10;- 添加导入任务的成功和失败行数统计功能&#10;- 优化前端页面数据获取，添加缓存破除机制确保实时更新&#10;- 在监控页面添加任务统计概览和最近任务列表展示&#10;- 实现在订单页面添加提交功能，支持草稿状态订单提交操作&#10;- 添加 API 接口支持订单状态更新和任务进度统计信息&#10;- 优化数据库表结构，在 event_outbox 表添加错误消息存储字段">
+      <option name="closed" value="true" />
+      <created>1785905013231</created>
+      <option name="number" value="00039" />
+      <option name="presentableId" value="LOCAL-00039" />
+      <option name="project" value="LOCAL" />
+      <updated>1785905013231</updated>
+    </task>
+    <option name="localTasksCounter" value="40" />
     <servers />
   </component>
   <component name="Vcs.Log.Tabs.Properties">
@@ -384,7 +388,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="config(redis): 更新 Upstash Redis 环境变量名称&#10;&#10;- 将环境变量名从 UPSTASH_REDIS_URL 和 UPSTASH_REDIS_TOKEN &#10;  更改为 UPSTASH_REDIS_KV_REST_API_URL 和 UPSTASH_REDIS_KV_REST_API_TOKEN&#10;- 更新控制台警告消息中的环境变量名称&#10;- 保持 Redis 客户端初始化逻辑不变" />
     <MESSAGE value="feat(import): 支持AI直接导入模式和规则引擎导入模式&#10;&#10;- 在import-worker.ts中新增importMode参数，支持'rule-engine'和'ai-direct'两种模式&#10;- AI直连模式下跳过规则映射步骤，直接将解析的数据转为MappedRow格式&#10;- 规则页面重构为双模式选择界面，支持AI生成规则和手动创建规则&#10;- 新增AI直接解析功能，可实时预览解析结果并确认导入&#10;- 新增规则引擎导入流程，通过选择规则后上传文件进行导入&#10;- 首页改版为多选项卡界面，分别展示AI智能解析和规则引擎导入入口&#10;- 添加完整的错误处理和用户提示信息" />
     <MESSAGE value="feat(homepage): 重构首页为多步骤AI智能导入流程&#10;&#10;- 替换标签页设计为四步骤流程（上传文件、AI分析、预览编辑、完成）&#10;- 集成AI自动分析功能，支持文件格式检测和规则自动生成&#10;- 添加数据验证、去重警告和统计信息展示&#10;- 实现异步上传和批量提交订单功能&#10;- 集成规则管理和编辑功能&#10;- 添加文件预览和数据编辑表格组件&#10;- 改进错误处理和用户反馈机制" />
     <MESSAGE value="feat(db): 添加订单表字段和凭证管理功能&#10;&#10;- 为orders表添加status、temperature_layer、weight、pieces、amount字段&#10;- 为trace_events表添加duration_ms字段&#10;- 创建app_credentials表用于存储应用凭证信息&#10;- 重构凭证管理页面实现新的API凭证管理功能&#10;- 更新导入任务页面UI并添加状态统计功能&#10;- 简化监控页面实现基础队列和任务监控功能" />
@@ -409,6 +412,7 @@
     <MESSAGE value="feat(api): 添加导入任务错误查询接口&#10;&#10;- 实现 GET /api/import-tasks/:id/errors 接口用于查询行级错误明细&#10;- 支持分页查询，包含页码和每页大小参数&#10;- 支持按分片索引和错误代码过滤条件&#10;- 返回错误列表及总数统计信息&#10;- 集成数据库查询逻辑，使用 drizzle-orm 进行数据操作&#10;- 添加错误处理机制，捕获查询异常并返回相应错误信息" />
     <MESSAGE value="refactor(parser): 优化文件预处理器支持多种缓冲区类型&#10;&#10;- 修改 preprocessWord 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessPdf 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 修改 preprocessFile 函数接受 ArrayBuffer | Uint8Array 类型&#10;- 移除 import 页面中的进度条显示组件&#10;- 修复多个页面 useEffect 依赖数组问题&#10;- 添加 import-tasks/[id]/shards API 路由实现&#10;- 优化数据库查询变量声明为常量" />
     <MESSAGE value="refactor(worker): 优化SKU验证超时处理机制&#10;&#10;- 移除过时的isSkuValidationTimeout函数&#10;- 实现Promise.race超时控制机制替代简单的性能检测&#10;- 添加SKU查询超时时的降级处理逻辑&#10;- 优化空SKU集的处理跳过验证步骤&#10;- 添加任务降级时的详细日志输出&#10;- 统一SKU查询异常和超时的错误处理路径" />
-    <option name="LAST_COMMIT_MESSAGE" value="refactor(worker): 优化SKU验证超时处理机制&#10;&#10;- 移除过时的isSkuValidationTimeout函数&#10;- 实现Promise.race超时控制机制替代简单的性能检测&#10;- 添加SKU查询超时时的降级处理逻辑&#10;- 优化空SKU集的处理跳过验证步骤&#10;- 添加任务降级时的详细日志输出&#10;- 统一SKU查询异常和超时的错误处理路径" />
+    <MESSAGE value="feat(import): 优化导入任务处理机制和监控功能&#10;&#10;- 在 outbox dispatcher 中添加 errorMessage 字段记录错误详情&#10;- 实现导入处理器中逐行写入订单功能，单条失败不阻断整体流程&#10;- 添加导入任务的成功和失败行数统计功能&#10;- 优化前端页面数据获取，添加缓存破除机制确保实时更新&#10;- 在监控页面添加任务统计概览和最近任务列表展示&#10;- 实现在订单页面添加提交功能，支持草稿状态订单提交操作&#10;- 添加 API 接口支持订单状态更新和任务进度统计信息&#10;- 优化数据库表结构，在 event_outbox 表添加错误消息存储字段" />
+    <option name="LAST_COMMIT_MESSAGE" value="feat(import): 优化导入任务处理机制和监控功能&#10;&#10;- 在 outbox dispatcher 中添加 errorMessage 字段记录错误详情&#10;- 实现导入处理器中逐行写入订单功能，单条失败不阻断整体流程&#10;- 添加导入任务的成功和失败行数统计功能&#10;- 优化前端页面数据获取，添加缓存破除机制确保实时更新&#10;- 在监控页面添加任务统计概览和最近任务列表展示&#10;- 实现在订单页面添加提交功能，支持草稿状态订单提交操作&#10;- 添加 API 接口支持订单状态更新和任务进度统计信息&#10;- 优化数据库表结构，在 event_outbox 表添加错误消息存储字段" />
   </component>
 </project>

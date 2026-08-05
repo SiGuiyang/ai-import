@@ -21,7 +21,6 @@ import {
   SyncOutlined,
   FileTextOutlined,
   FileExcelOutlined,
-  WarningOutlined,
   RiseOutlined,
   FallOutlined,
 } from "@ant-design/icons";
