@@ -16,7 +16,7 @@ V4 将 V2 的同步阻塞式导入重构为**异步事件驱动架构**，核心
 
 - **Framework**: Next.js 14 App Router
 - **Queue**: BullMQ + Upstash Redis
-- **Database**: Neon PostgreSQL (Drizzle ORM)
+- **Database**: Neon PostgreSQL (Drizzle ORM，`neon-serverless` WebSocket 驱动，支持 `db.transaction()` 事务)
 - **UI**: Ant Design 5
 - **Runtime**: Node.js 18+
 
@@ -91,6 +91,9 @@ npm test
 
 # 仅架构红线守卫（批量写入 / 同事务 / 幂等 / 真实百分位 / 卡死恢复）
 npm run test:architecture
+
+# 真实事务集成测试（neon-serverless 驱动：回滚 + 提交，需 .env 中 DATABASE_URL）
+npm run test:tx
 ```
 
 测试覆盖（考试要求 12 项）：

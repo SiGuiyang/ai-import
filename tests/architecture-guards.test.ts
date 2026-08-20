@@ -62,6 +62,13 @@ test("[红线] Outbox dispatcher 存在且按事件名分发", () => {
   assert.match(dispatcher, /eventOutbox/, "dispatcher 引用 eventOutbox");
 });
 
+test("[红线] 数据库驱动必须支持事务（neon-serverless，禁止 neon-http）", () => {
+  const dbIndex = read("lib/db/index.ts");
+  assert.match(dbIndex, /neon-serverless/, "必须使用 drizzle-orm/neon-serverless");
+  assert.match(dbIndex, /Pool/, "必须使用 @neondatabase/serverless Pool");
+  assert.ok(!/neon-http/.test(dbIndex), "禁止使用 drizzle-orm/neon-http（不支持事务）");
+});
+
 test("[幂等] 分片已 completed 时快速返回", () => {
   assert.match(
     processor,

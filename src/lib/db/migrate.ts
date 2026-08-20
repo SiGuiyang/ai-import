@@ -7,9 +7,11 @@ import { neon } from "@neondatabase/serverless";
 const MIGRATION_SQLS: string[] = [
   // ========== 枚举类型 ==========
   `DO $$ BEGIN CREATE TYPE app_status AS ENUM ('active', 'disabled'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
-  `DO $$ BEGIN CREATE TYPE import_task_status AS ENUM ('pending', 'processing', 'completed', 'failed', 'degraded'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+  `DO $$ BEGIN CREATE TYPE import_task_status AS ENUM ('pending', 'processing', 'completed', 'partial_success', 'failed', 'degraded'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
   `DO $$ BEGIN CREATE TYPE shard_status AS ENUM ('pending', 'locked', 'completed', 'failed', 'skipped'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
   `DO $$ BEGIN CREATE TYPE outbox_status AS ENUM ('pending', 'sent', 'failed'); EXCEPTION WHEN duplicate_object THEN NULL; END $$`,
+  // 已存在的库：为 import_task_status 追加 partial_success（PG 12+ 支持 ADD VALUE IF NOT EXISTS）
+  `ALTER TYPE import_task_status ADD VALUE IF NOT EXISTS 'partial_success'`,
 
   // ========== 解析规则表 ==========
   `CREATE TABLE IF NOT EXISTS parsing_rules (
