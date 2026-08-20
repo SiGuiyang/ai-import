@@ -37,8 +37,9 @@ const statusConfig: Record<string, { color: string; icon: React.ReactNode; label
   pending: { color: "default", icon: <ClockCircleOutlined />, label: "待处理" },
   processing: { color: "processing", icon: <SyncOutlined spin />, label: "处理中" },
   completed: { color: "success", icon: <CheckCircleOutlined />, label: "已完成" },
+  partial_success: { color: "warning", icon: <WarningOutlined />, label: "部分成功" },
   failed: { color: "error", icon: <CloseCircleOutlined />, label: "失败" },
-  degraded: { color: "warning", icon: <WarningOutlined />, label: "已完成（降级）" },
+  degraded: { color: "purple", icon: <WarningOutlined />, label: "已完成（降级）" },
 };
 
 export default function TaskProgressPage() {
@@ -193,7 +194,7 @@ export default function TaskProgressPage() {
             status={
               t.status === "degraded"
                 ? "success"
-                : t.status === "completed"
+                : t.status === "completed" || t.status === "partial_success"
                 ? "success"
                 : t.status === "failed"
                 ? "exception"

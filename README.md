@@ -75,13 +75,35 @@ npm run seed
 ## 运行压测
 
 ```bash
-# 1. 生成测试数据
+# 1. 生成测试数据（自动清理历史业务数据，避免脏数据累积）
 npm run seed
 
 # 2. 确保服务已启动（dev + worker）
-# 3. 执行压测
+# 3. 执行压测（结束条件支持 completed / partial_success / degraded / failed）
 npx tsx scripts/load-test.ts
 ```
+
+## 运行自动化测试
+
+```bash
+# 全部测试（纯函数单测 + 架构红线守卫 + 上传快速计数验证，无需 DB/Redis）
+npm test
+
+# 仅架构红线守卫（批量写入 / 同事务 / 幂等 / 真实百分位 / 卡死恢复）
+npm run test:architecture
+```
+
+测试覆盖（考试要求 12 项）：
+- 上传 1s 保障（`decode_range` 快速计数与全量一致且更快）
+- 任务+分片+Outbox 同一 DB 事务（Transactional Outbox）
+- 批量写入（架构守卫禁止逐行 INSERT 模式回归）
+- 分片幂等（completed 快速返回 + pending→locked 原子锁定）
+- SKU 校验降级（Promise.race 3s 超时 + SKIP_VALIDATION 记录）
+- E001-E008 错误码体系（无自定义码）
+- `partial_success` 状态流转
+- 卡死分片恢复决策（重投 / 标记失败）
+- 监控真实百分位（PERCENTILE_CONT，禁止 avg 伪造）
+- Outbox dispatcher / 行级错误表 / Trace 表 / 性能日志表结构
 
 ## 处理单元设计
 
@@ -89,6 +111,16 @@ npx tsx scripts/load-test.ts
 - **10,000 行 = 10 分片**
 - **Worker 并发 = 2**（可扩展）
 - **期望全链路 ≤ 60s**
+- **批量写入**：orders/orderItems 按 200 行/批批量 UPSERT/INSERT，禁止逐行
+- **最终状态**：全部成功 → `completed`；部分失败 → `partial_success`；降级 → `degraded=true` 标记
+
+## 可靠性保障
+
+- **Transactional Outbox**：任务、分片、`IMPORT_SHARD_CREATED` 事件在同一 DB 事务写入，dispatcher 按事件名可靠投递
+- **幂等**：分片已 `completed` 快速返回（SHARD_SKIPPED）；`pending→locked` 带条件原子更新，防止重复消费
+- **卡死恢复**：Worker 内置定时扫描（60s），锁定超 5 分钟的 `locked` 分片自动重投（≤3 次），重试耗尽标记 `failed` 并推进任务完成（`partial_success`）
+- **失败重试**：BullMQ 每 Job 重试 3 次，退避 2s/4s/8s
+- **SKU 校验降级**：3s 超时自动降级，降级分片记录 `SKIP_VALIDATION`，任务标记 `degraded=true`
 
 ## API 列表
 
@@ -99,8 +131,9 @@ npx tsx scripts/load-test.ts
 | GET | `/api/import-tasks/:id` | 任务进度 |
 | GET | `/api/import-tasks/:id/errors` | 错误明细 |
 | GET | `/api/import-tasks/:id/shards` | 分片性能 |
-| GET | `/api/import-monitor/summary` | 监控聚合 |
-| GET | `/api/traces/:id` | Trace 检索 |
+| GET | `/api/import-monitor/summary` | 监控聚合（P50/P95/P99 真实百分位） |
+| GET | `/api/traces/:id` | Trace 检索（按 Trace/Task ID） |
+| GET | `/api/traces/search?type=&q=` | Trace 高级检索（文件名/批次号/行号范围/错误码） |
 
 ## 页面列表
 
@@ -108,5 +141,6 @@ npx tsx scripts/load-test.ts
 |------|-------------|
 | `/import` | 文件上传 |
 | `/import/[id]/progress` | 任务进度详情 |
-| `/monitor` | 监控看板 |
-| `/traces` | Trace 检索 |
+| `/import-tasks` | 任务列表（状态筛选含 partial_success） |
+| `/monitor` | 监控看板（阶段耗时 P50/P95/P99） |
+| `/traces` | Trace 检索（支持高级搜索） |

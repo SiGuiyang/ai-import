@@ -52,6 +52,10 @@ interface TestReport {
     errorCode: string;
     count: number;
   }>;
+  httpErrors?: Array<{
+    endpoint: string;
+    status: number;
+  }>;
 }
 
 async function main() {
@@ -89,8 +93,13 @@ async function main() {
   });
 
   if (!uploadRes.ok) {
-    const err = await uploadRes.json();
-    throw new Error(`Upload failed: ${err.error || uploadRes.statusText}`);
+    const err = await uploadRes.json().catch(() => ({}));
+    // 记录 500/504 等非预期响应，便于考试报告观测
+    report.httpErrors = report.httpErrors || [];
+    report.httpErrors.push({ endpoint: "POST /api/import-tasks", status: uploadRes.status });
+    throw new Error(
+      `Upload failed (HTTP ${uploadRes.status}): ${err.error || uploadRes.statusText}`
+    );
   }
 
   const uploadData = await uploadRes.json();
@@ -124,6 +133,13 @@ async function main() {
     const taskRes = await fetch(
       `${BASE_URL}/api/import-tasks/${uploadData.taskId}`
     );
+    if (!taskRes.ok) {
+      // 记录 500/504 等异常，继续轮询（服务端偶发失败不应终止压测）
+      report.httpErrors = report.httpErrors || [];
+      report.httpErrors.push({ endpoint: `GET /api/import-tasks/${uploadData.taskId}`, status: taskRes.status });
+      await sleep(POLL_INTERVAL_MS);
+      continue;
+    }
     const taskData = await taskRes.json();
 
     const { task, progress } = taskData;
@@ -139,7 +155,7 @@ async function main() {
       lastLogTime = now;
     }
 
-    if (task.status === "completed" || task.status === "degraded" || task.status === "failed") {
+    if (task.status === "completed" || task.status === "partial_success" || task.status === "degraded" || task.status === "failed") {
       const totalDuration = Date.now() - startTime;
 
       report.processing = {
@@ -229,6 +245,20 @@ async function main() {
     report.errors.forEach((e) => {
       console.log(`  ${e.errorCode}: ${e.count}`);
     });
+  }
+
+  if (report.httpErrors && report.httpErrors.length > 0) {
+    console.log("\n--- HTTP Errors (5xx) ---");
+    const httpMap = new Map<string, number>();
+    report.httpErrors.forEach((h) => {
+      httpMap.set(h.endpoint, (httpMap.get(h.endpoint) || 0) + 1);
+    });
+    report.httpErrors.forEach((h) => {
+      console.log(`  ${h.endpoint}: HTTP ${h.status} x${httpMap.get(h.endpoint)}`);
+    });
+  } else {
+    console.log("\n--- HTTP Errors (5xx) ---");
+    console.log("  None (all requests returned 2xx)");
   }
 
   console.log("\n--- Summary ---");

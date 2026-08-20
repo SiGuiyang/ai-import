@@ -96,6 +96,7 @@ export const importTaskStatusEnum = pgEnum("import_task_status", [
   "pending",
   "processing",
   "completed",
+  "partial_success",
   "failed",
   "degraded",
 ]);

@@ -48,10 +48,20 @@ interface TaskSummary {
   failedTasks: number;
 }
 
+interface PerformanceStats {
+  perfCount: number;
+  parseAvg: number; parseP50: number; parseP95: number; parseP99: number;
+  ruleAvg: number; ruleP50: number; ruleP95: number; ruleP99: number;
+  validateAvg: number; validateP50: number; validateP95: number; validateP99: number;
+  insertAvg: number; insertP50: number; insertP95: number; insertP99: number;
+  totalAvg: number; totalP50: number; totalP95: number; totalP99: number;
+  totalMax: number; totalMin: number;
+}
+
 interface MonitorData {
   throughput: Record<string, { totalRows: number; count: number }>;
   queue: { waiting: number; active: number; completed: number; failed: number; delayed: number };
-  performance: { totalAvg: number; totalMax: number; totalMin: number; perfCount: number; parseAvg: number; validateAvg: number; insertAvg: number };
+  performance: PerformanceStats;
   errors: Array<{ errorCode: string; errorCount: number }>;
   taskStats: Array<{ status: string; taskCount: number }>;
   taskSummary: TaskSummary;
@@ -105,6 +115,7 @@ export default function MonitorPage() {
     pending: "待处理",
     processing: "处理中",
     completed: "已完成",
+    partial_success: "部分成功",
     failed: "失败",
     degraded: "降级完成",
   };
@@ -113,8 +124,9 @@ export default function MonitorPage() {
     pending: "default",
     processing: "processing",
     completed: "success",
+    partial_success: "warning",
     failed: "error",
-    degraded: "warning",
+    degraded: "purple",
   };
 
   const taskTotal = (taskStats || []).reduce((sum, s) => sum + s.taskCount, 0);
@@ -203,19 +215,23 @@ export default function MonitorPage() {
 
         {/* 阶段耗时 */}
         <Col span={12}>
-          <Card title="批次耗时统计 (最近 60min)">
+          <Card title={`批次耗时统计 (最近 60min, 共 ${performance.perfCount} 批次)`}>
             <Table
               dataSource={[
-                { key: "parse", stage: "解析", avg: performance.parseAvg, ...getPercentiles(performance.parseAvg) },
-                { key: "validate", stage: "校验", avg: performance.validateAvg, ...getPercentiles(performance.validateAvg) },
-                { key: "insert", stage: "写入", avg: performance.insertAvg, ...getPercentiles(performance.insertAvg) },
-                { key: "total", stage: "总计", avg: performance.totalAvg, max: performance.totalMax, min: performance.totalMin },
+                { key: "parse", stage: "解析", avg: performance.parseAvg, p50: performance.parseP50, p95: performance.parseP95, p99: performance.parseP99 },
+                { key: "rule", stage: "规则", avg: performance.ruleAvg, p50: performance.ruleP50, p95: performance.ruleP95, p99: performance.ruleP99 },
+                { key: "validate", stage: "校验", avg: performance.validateAvg, p50: performance.validateP50, p95: performance.validateP95, p99: performance.validateP99 },
+                { key: "insert", stage: "写入", avg: performance.insertAvg, p50: performance.insertP50, p95: performance.insertP95, p99: performance.insertP99 },
+                { key: "total", stage: "总计", avg: performance.totalAvg, p50: performance.totalP50, p95: performance.totalP95, p99: performance.totalP99, max: performance.totalMax, min: performance.totalMin },
               ]}
               columns={[
-                { title: "阶段", dataIndex: "stage", width: 80 },
-                { title: "平均 (ms)", dataIndex: "avg", render: (v: number) => Math.round(v).toLocaleString() },
-                { title: "最小 (ms)", dataIndex: "min", render: (v: number) => v ? Math.round(v).toLocaleString() : "-" },
-                { title: "最大 (ms)", dataIndex: "max", render: (v: number) => v ? Math.round(v).toLocaleString() : "-" },
+                { title: "阶段", dataIndex: "stage", width: 70 },
+                { title: "平均 (ms)", dataIndex: "avg", render: (v: number) => (v ? Math.round(v).toLocaleString() : "-") },
+                { title: "P50 (ms)", dataIndex: "p50", render: (v: number) => (v ? Math.round(v).toLocaleString() : "-") },
+                { title: "P95 (ms)", dataIndex: "p95", render: (v: number) => (v ? Math.round(v).toLocaleString() : "-") },
+                { title: "P99 (ms)", dataIndex: "p99", render: (v: number) => (v ? Math.round(v).toLocaleString() : "-") },
+                { title: "最小 (ms)", dataIndex: "min", render: (v: number) => (v ? Math.round(v).toLocaleString() : "-") },
+                { title: "最大 (ms)", dataIndex: "max", render: (v: number) => (v ? Math.round(v).toLocaleString() : "-") },
               ]}
               pagination={false}
               size="small"
@@ -287,7 +303,7 @@ export default function MonitorPage() {
                         record.status === "completed" ? "#52c41a" :
                         record.status === "failed" ? "#ff4d4f" :
                         record.status === "processing" ? "#1677ff" :
-                        record.status === "degraded" ? "#faad14" :
+                        record.status === "partial_success" || record.status === "degraded" ? "#faad14" :
                         "#d9d9d9"
                       }
                       format={() => `${v}%`}
@@ -416,12 +432,4 @@ export default function MonitorPage() {
       </Card>
     </div>
   );
-}
-
-function getPercentiles(avg: number) {
-  if (!avg) return { min: 0, max: 0 };
-  return {
-    min: Math.round(avg * 0.3),
-    max: Math.round(avg * 3),
-  };
 }

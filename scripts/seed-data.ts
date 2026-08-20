@@ -41,12 +41,27 @@ async function main() {
   const db = drizzle(sql, { schema });
 
   // ========== Step 1: 清理旧数据 ==========
+  // 清理顺序按依赖：先子表后父表，避免脏数据累积导致测试失真
   console.log("\n[1/3] Cleaning old data...");
-  try {
-    await db.delete(schema.skuMaster);
-    console.log("  sku_master: cleared");
-  } catch (e: any) {
-    console.log("  sku_master: skip (table may not exist yet)");
+  const cleanTargets: Array<[any, string]> = [
+    [schema.orderItems, "order_items"],
+    [schema.orders, "orders"],
+    [schema.importTaskErrors, "import_task_errors"],
+    [schema.importTaskShards, "import_task_shards"],
+    [schema.batchPerformanceLog, "batch_performance_log"],
+    [schema.eventOutbox, "event_outbox"],
+    [schema.traceEvents, "trace_events"],
+    [schema.importTasks, "import_tasks"],
+    [schema.fileImports, "file_imports"],
+    [schema.skuMaster, "sku_master"],
+  ];
+  for (const [table, name] of cleanTargets) {
+    try {
+      await db.delete(table as any);
+      console.log(`  ${name}: cleared`);
+    } catch (e: any) {
+      console.log(`  ${name}: skip (table may not exist yet)`);
+    }
   }
 
   // ========== Step 2: 插入 SKU 主数据 ==========

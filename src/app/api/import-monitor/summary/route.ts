@@ -57,13 +57,29 @@ export async function GET() {
       .orderBy(desc(sql`COUNT(*)`))
       .limit(10);
 
-    // 3. 阶段耗时 P50/P95/P99
+    // 3. 阶段耗时 P50/P95/P99（真实百分位计算）
     const perfQuery = db
       .select({
         parseAvg: sql<number>`COALESCE(AVG(${batchPerformanceLog.parseDurationMs}), 0)`,
+        parseP50: sql<number>`COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${batchPerformanceLog.parseDurationMs}), 0)`,
+        parseP95: sql<number>`COALESCE(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY ${batchPerformanceLog.parseDurationMs}), 0)`,
+        parseP99: sql<number>`COALESCE(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY ${batchPerformanceLog.parseDurationMs}), 0)`,
+        ruleAvg: sql<number>`COALESCE(AVG(${batchPerformanceLog.ruleDurationMs}), 0)`,
+        ruleP50: sql<number>`COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${batchPerformanceLog.ruleDurationMs}), 0)`,
+        ruleP95: sql<number>`COALESCE(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY ${batchPerformanceLog.ruleDurationMs}), 0)`,
+        ruleP99: sql<number>`COALESCE(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY ${batchPerformanceLog.ruleDurationMs}), 0)`,
         validateAvg: sql<number>`COALESCE(AVG(${batchPerformanceLog.validateDurationMs}), 0)`,
+        validateP50: sql<number>`COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${batchPerformanceLog.validateDurationMs}), 0)`,
+        validateP95: sql<number>`COALESCE(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY ${batchPerformanceLog.validateDurationMs}), 0)`,
+        validateP99: sql<number>`COALESCE(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY ${batchPerformanceLog.validateDurationMs}), 0)`,
         insertAvg: sql<number>`COALESCE(AVG(${batchPerformanceLog.insertDurationMs}), 0)`,
+        insertP50: sql<number>`COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${batchPerformanceLog.insertDurationMs}), 0)`,
+        insertP95: sql<number>`COALESCE(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY ${batchPerformanceLog.insertDurationMs}), 0)`,
+        insertP99: sql<number>`COALESCE(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY ${batchPerformanceLog.insertDurationMs}), 0)`,
         totalAvg: sql<number>`COALESCE(AVG(${batchPerformanceLog.totalDurationMs}), 0)`,
+        totalP50: sql<number>`COALESCE(PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY ${batchPerformanceLog.totalDurationMs}), 0)`,
+        totalP95: sql<number>`COALESCE(PERCENTILE_CONT(0.95) WITHIN GROUP (ORDER BY ${batchPerformanceLog.totalDurationMs}), 0)`,
+        totalP99: sql<number>`COALESCE(PERCENTILE_CONT(0.99) WITHIN GROUP (ORDER BY ${batchPerformanceLog.totalDurationMs}), 0)`,
         totalMax: sql<number>`COALESCE(MAX(${batchPerformanceLog.totalDurationMs}), 0)`,
         totalMin: sql<number>`COALESCE(MIN(${batchPerformanceLog.totalDurationMs}), 0)`,
         perfCount: sql<number>`COUNT(*)::int`,

@@ -16,6 +16,8 @@ import { parseFileWithRule } from "@/lib/parser/engine";
 import {
   buildDegradationMessage,
 } from "./degradation";
+import { validateOrders } from "@/lib/validation/validator";
+import { mapFormatErrorToCode, resolveFinalStatus } from "./pure";
 import type { ImportShardJobData } from "@/lib/queue";
 import type { ParsedOrder } from "@/lib/parser/types";
 
@@ -58,6 +60,33 @@ export async function processShardJob(
     if (!task.fileData) {
       throw new Error(`Task ${taskId} has no file data`);
     }
+
+    // ========== 幂等检查：分片已完成则快速返回 ==========
+    const [existingShard] = await db
+      .select({ status: importTaskShards.status })
+      .from(importTaskShards)
+      .where(
+        sql`${importTaskShards.taskId} = ${taskId} AND ${importTaskShards.shardIndex} = ${shardIndex}`
+      );
+    if (existingShard && existingShard.status === "completed") {
+      console.log(`[Worker] Shard ${shardIndex} (${taskId}) already completed, skip`);
+      await addTraceEvent({
+        traceId,
+        taskId,
+        shardIndex,
+        eventName: "SHARD_SKIPPED",
+        message: `Shard ${shardIndex} already completed, fast-return`,
+      });
+      return;
+    }
+
+    // 原子锁定分片（防止重复消费）
+    await db
+      .update(importTaskShards)
+      .set({ status: "locked", lockedAt: new Date() } as any)
+      .where(
+        sql`${importTaskShards.taskId} = ${taskId} AND ${importTaskShards.shardIndex} = ${shardIndex} AND ${importTaskShards.status} = 'pending'`
+      );
 
     // 读取解析规则（如有）
     let steps: any[] = [];
@@ -117,13 +146,34 @@ export async function processShardJob(
       return;
     }
 
-    // ========== Step 3: 批量 SKU 校验 ==========
+    // ========== Step 3: 校验（格式校验 + SKU 存在性校验，失败行跳过写入） ==========
     let degraded = task.degraded || false;
     let validateDuration = 0;
+    const rowValidationErrors: any[] = [];
+    const invalidRowSet = new Set<number>(); // 校验失败的行，写入时跳过
 
+    const validateStart = performance.now();
+
+    // 3.1 格式校验（必填 / 电话格式 / 数量正数 / 外部编码重复）
+    const formatErrors = validateOrders(shardOrders);
+    for (const vErr of formatErrors) {
+      const rowNumber = startRow + vErr.rowIndex;
+      const errorCode = mapFormatErrorToCode(vErr.field);
+      rowValidationErrors.push({
+        taskId,
+        shardIndex,
+        rowNumber,
+        fieldName: vErr.field,
+        rawValue: vErr.message,
+        errorCode,
+        errorReason: vErr.message,
+        traceId,
+      });
+      invalidRowSet.add(vErr.rowIndex);
+    }
+
+    // 3.2 SKU 存在性校验（可降级）
     if (!degraded) {
-      const validateStart = performance.now();
-
       try {
         // 收集所有 SKU 编码
         const skuCodes: string[] = [];
@@ -165,42 +215,28 @@ export async function processShardJob(
           }
         }
 
-        validateDuration = performance.now() - validateStart;
-
-        // 校验每个 SKU
-        const errors: any[] = [];
-        for (const order of shardOrders) {
+        // 校验每个 SKU，失败行标记跳过（E001）
+        const skuInvalidRows = new Set<number>();
+        shardOrders.forEach((order, idx) => {
           if (order.items) {
             for (const item of order.items) {
               if (item.skuCode && validSkuSet.size > 0 && !validSkuSet.has(item.skuCode)) {
-                errors.push({
+                rowValidationErrors.push({
                   taskId,
                   shardIndex,
-                  rowNumber: startRow,
+                  rowNumber: startRow + idx,
                   fieldName: "sku_code",
                   rawValue: item.skuCode,
-                  errorCode: "SKU_NOT_FOUND",
-                  errorReason: `SKU "${item.skuCode}" not found in master data`,
+                  errorCode: "E001",
+                  errorReason: `SKU "${item.skuCode}" 在主数据中不存在`,
                   traceId,
                 });
+                skuInvalidRows.add(idx);
               }
             }
           }
-        }
-
-        // 写入错误
-        if (errors.length > 0) {
-          await db.insert(importTaskErrors).values(errors as any);
-          addTraceEvent({
-            traceId,
-            taskId,
-            shardIndex,
-            eventName: "SKU_VALIDATION_ERRORS",
-            eventStatus: "error",
-            message: `${errors.length} SKU not found errors`,
-            metadata: { errorCount: errors.length },
-          });
-        }
+        });
+        skuInvalidRows.forEach((i) => invalidRowSet.add(i));
       } catch (skuErr: any) {
         // SKU 查询超时或异常 → 降级
         degraded = true;
@@ -220,19 +256,52 @@ export async function processShardJob(
           .set({ degraded: true } as any)
           .where(eq(importTasks.id, taskId as any));
         console.warn(`[Worker] Task ${taskId} shard ${shardIndex} degraded: ${msg}`);
+
+        // 降级后仍需记录哪些行未经过 SKU 校验
+        rowValidationErrors.push({
+          taskId,
+          shardIndex,
+          rowNumber: startRow,
+          fieldName: "sku_code",
+          rawValue: `${startRow}-${endRow}`,
+          errorCode: "SKIP_VALIDATION",
+          errorReason: `降级模式：本分片行 ${startRow}-${endRow} 的 SKU 未经过主数据校验（${msg}）`,
+          traceId,
+        });
       }
     }
 
-    // ========== Step 4: 逐行写入订单（失败不阻断） ==========
+    validateDuration = performance.now() - validateStart;
+
+    // 写入行级校验错误
+    if (rowValidationErrors.length > 0) {
+      await db.insert(importTaskErrors).values(rowValidationErrors as any);
+      addTraceEvent({
+        traceId,
+        taskId,
+        shardIndex,
+        eventName: "ROW_VALIDATION_ERRORS",
+        eventStatus: "error",
+        message: `${rowValidationErrors.length} row validation errors (E001-E005)`,
+        metadata: { errorCount: rowValidationErrors.length },
+      });
+    }
+
+    // ========== Step 4: 批量写入订单（失败行跳过，成功行批量插入） ==========
     const insertStart = performance.now();
     let insertedOrders = 0;
     let insertErrors = 0;
     const insertErrorRecords: any[] = [];
 
-    // 逐行插入，单条失败则记录错误 + 跳过，不阻断分片
+    // 保留原始行索引，校验失败的行跳过写入
+    const validEntries = shardOrders
+      .map((order, idx) => ({ order, idx }))
+      .filter(({ idx }) => !invalidRowSet.has(idx));
+
     const BATCH_SIZE = 200;
-    const orderValues = shardOrders.map((order, idx) => ({
+    const orderValues = validEntries.map(({ order, idx }) => ({
       idx,
+      rowNumber: startRow + idx,
       values: {
         externalCode: order.externalCode || null,
         importId: taskId,
@@ -248,25 +317,24 @@ export async function processShardJob(
       items: order.items || [],
     }));
 
-    const allItemValues: any[] = [];
-
     for (let i = 0; i < orderValues.length; i += BATCH_SIZE) {
       const batch = orderValues.slice(i, i + BATCH_SIZE);
 
-      for (const { idx, values, items: itemList } of batch) {
-        const rowNumber = startRow + idx;
-        try {
-          const [result] = await db
-            .insert(orders)
-            .values(values)
-            .returning({ id: orders.id });
+      try {
+        // 批量插入 orders（一次插入一批，禁止逐行 INSERT）
+        const inserted = await db
+          .insert(orders)
+          .values(batch.map((b) => b.values))
+          .returning({ id: orders.id });
 
-          const orderId = result.id;
+        // 按输入顺序映射 orderId，并批量构建该批 orderItems
+        const itemValues: any[] = [];
+        batch.forEach((b, j) => {
+          const orderId = inserted[j]?.id;
+          if (!orderId) return;
           insertedOrders++;
-
-          // 构建该订单的 orderItems
-          itemList.forEach((item: any, itemIdx: number) => {
-            allItemValues.push({
+          b.items.forEach((item: any, itemIdx: number) => {
+            itemValues.push({
               orderId,
               skuCode: item.skuCode || "",
               skuName: item.skuName || "",
@@ -276,42 +344,26 @@ export async function processShardJob(
               lineNo: itemIdx + 1,
             });
           });
-        } catch (rowErr: any) {
-          insertErrors++;
-          insertErrorRecords.push({
-            taskId,
-            shardIndex,
-            rowNumber,
-            fieldName: "__order__",
-            rawValue: JSON.stringify(values),
-            errorCode: "DB_INSERT_ERROR",
-            errorReason: `行 ${rowNumber} 写入失败: ${rowErr.message}`,
-            traceId,
-          });
-        }
-      }
-    }
+        });
 
-    // 批量写入 orderItems（只写成功订单的 items）
-    if (allItemValues.length > 0) {
-      for (let i = 0; i < allItemValues.length; i += BATCH_SIZE) {
-        const batch = allItemValues.slice(i, i + BATCH_SIZE);
-        try {
-          await db.insert(orderItems).values(batch as any);
-        } catch (itemErr: any) {
-          // orderItems 写入失败：单独记录
+        if (itemValues.length > 0) {
+          await db.insert(orderItems).values(itemValues as any);
+        }
+      } catch (batchErr: any) {
+        // 整批失败：逐行记录错误（不阻断分片）
+        batch.forEach((b) => {
           insertErrors++;
           insertErrorRecords.push({
             taskId,
             shardIndex,
-            rowNumber: startRow,
-            fieldName: "__order_items__",
-            rawValue: `batch ${i / BATCH_SIZE}`,
-            errorCode: "DB_INSERT_ERROR",
-            errorReason: `OrderItems 批量写入失败: ${itemErr.message}`,
+            rowNumber: b.rowNumber,
+            fieldName: "__order__",
+            rawValue: JSON.stringify(b.values),
+            errorCode: "E007",
+            errorReason: `行 ${b.rowNumber} 写入失败: ${batchErr.message}`,
             traceId,
           });
-        }
+        });
       }
     }
 
@@ -444,11 +496,14 @@ async function markShardCompleted(
     .where(eq(importTasks.id, taskId as any));
 
   if (task && task.completedShards >= task.totalShards) {
-    const newStatus = task.degraded ? "degraded" : "completed";
+    // 状态流转：全部成功 → completed；部分失败 → partial_success；
+    // 降级不改变完成状态，仅通过 degraded 布尔标记（前端任务详情页标注降级）
+    const newStatus = resolveFinalStatus(task.failedRows ?? 0);
     await db
       .update(importTasks)
       .set({
         status: newStatus,
+        degraded: task.degraded || false,
         completedAt: new Date(),
         updatedAt: new Date(),
       } as any)
@@ -458,7 +513,13 @@ async function markShardCompleted(
       traceId,
       taskId,
       eventName: "TASK_COMPLETED",
-      message: `Task completed: ${task.completedShards}/${task.totalShards} shards, success=${task.successRows}, failed=${task.failedRows}, status=${newStatus}`,
+      message: `Task completed: ${task.completedShards}/${task.totalShards} shards, success=${task.successRows}, failed=${task.failedRows}, status=${newStatus}, degraded=${task.degraded || false}`,
+      metadata: {
+        successRows: task.successRows,
+        failedRows: task.failedRows,
+        status: newStatus,
+        degraded: task.degraded || false,
+      },
     });
   }
 }

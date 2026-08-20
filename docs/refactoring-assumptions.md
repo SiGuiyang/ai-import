@@ -95,18 +95,44 @@
 
 ---
 
-## 11. 事务边界
+## 11. 事务边界（Transactional Outbox）
 
-**假设**: 以下操作不保证原子性：
-- 创建任务（import_tasks）
-- 创建分片（import_task_shards）
-- 创建出箱事件（event_outbox）
+**假设**: 创建任务（import_tasks）、创建分片（import_task_shards）、创建出箱事件（event_outbox）在**同一个 DB 事务**内提交。
 
-**原因**: 简化实现。如果创建分片失败但任务已创建，任务状态为 `pending` 且无分片，不会产生副作用。
+**原因**: 满足考试"Outbox 同事务可靠投递"要求。任一写入失败整体回滚，保证任务与事件要么同时存在、要么同时不存在。分片入队到 BullMQ 在事务**之后**执行，入队失败不阻塞任务创建（由 outbox dispatcher 兜底重试）。
 
 ---
 
-## 12. 上传文件内容存储
+## 12. 最终状态与部分成功
+
+**假设**: 任务最终状态区分以下情况：
+- 所有分片成功 → `completed`
+- 存在失败行/失败分片 → `partial_success`（部分成功）
+- SKU 校验降级 → 状态不变，`degraded = true` 标记
+
+**前端**: `/import-tasks`、`/monitor`、`/import/[id]/progress`、`/traces` 均展示 `partial_success`（黄色"部分成功"标签）。
+
+---
+
+## 13. 卡死分片恢复
+
+**假设**: Worker 内置定时器（60s 间隔）扫描 `locked` 状态且锁定时间超过 5 分钟的分片：
+- `retryCount < 3` → 重置为 `pending` 并重新入队（记录 `SHARD_RECOVERED` Trace）
+- 重试耗尽 → 标记 `failed`，该分片行数计入 `failedRows`，任务推进至 `partial_success`/`completed`
+
+**原因**: 防止 Worker 崩溃/杀进程导致分片永久卡在 `locked`。
+
+---
+
+## 14. 测试数据清理策略
+
+**假设**: `npm run seed` 会先按依赖顺序清理业务表（order_items → orders → import_task_errors → import_task_shards → batch_performance_log → event_outbox → trace_events → import_tasks → file_imports → sku_master），再写入 20,000 条 SKU 并生成 10,000 行测试 Excel。
+
+**原因**: 重复压测时避免历史任务/错误/性能日志累积导致监控与统计失真。
+
+---
+
+## 15. 上传文件内容存储
 
 **假设**: 文件内容以 base64 存储在 `import_tasks.file_data`。
 

@@ -9,7 +9,9 @@
     "start": "next start",
     "lint": "next lint",
     "seed": "npx tsx scripts/seed-data.ts",
-    "worker": "npx tsx scripts/worker.ts"
+    "worker": "npx tsx scripts/worker.ts",
+    "test": "node --import tsx --test \"tests/**/*.test.ts\"",
+    "test:architecture": "node --import tsx --test \"tests/architecture-guards.test.ts\""
   },
   "dependencies": {
     "@ant-design/icons": "^6.3.2",

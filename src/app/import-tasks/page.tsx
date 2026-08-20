@@ -23,7 +23,7 @@ interface ImportTask {
   fileName: string;
   fileType: string;
   ruleId: string | null;
-  status: "pending" | "processing" | "completed" | "failed" | "degraded";
+  status: "pending" | "processing" | "completed" | "partial_success" | "failed" | "degraded";
   totalRows: number;
   processedRows: number;
   successRows: number;
@@ -43,8 +43,9 @@ const statusMap: Record<string, { color: string; label: string }> = {
   pending: { color: "default", label: "待处理" },
   processing: { color: "processing", label: "处理中" },
   completed: { color: "success", label: "已完成" },
+  partial_success: { color: "warning", label: "部分成功" },
   failed: { color: "error", label: "失败" },
-  degraded: { color: "warning", label: "降级完成" },
+  degraded: { color: "purple", label: "降级完成" },
 };
 
 export default function ImportTasksPage() {
@@ -326,6 +327,7 @@ export default function ImportTasksPage() {
               { value: "pending", label: "待处理" },
               { value: "processing", label: "处理中" },
               { value: "completed", label: "已完成" },
+              { value: "partial_success", label: "部分成功" },
               { value: "failed", label: "失败" },
               { value: "degraded", label: "降级完成" },
             ]}
